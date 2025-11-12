@@ -29,6 +29,7 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:-postgres}
       DB_NAME: ${DB_NAME:-todo_db}
       DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@db:5432/${DB_NAME:-todo_db}
+      SERVER_URL: ${SERVER_URL:-http://194.87.248.160:3001}
     depends_on:
       db:
         condition: service_healthy

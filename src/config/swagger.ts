@@ -13,9 +13,14 @@ const options: swaggerJsdoc.Options = {
     },
     servers: [
       {
-        url: 'http://localhost:3000',
-        description: 'Development server',
+        url: process.env.SERVER_URL || `http://localhost:${process.env.PORT || 3000}`,
+        description: process.env.SERVER_URL ? 'Production server' : 'Development server',
       },
+      // Добавляем localhost для разработки, если указан SERVER_URL
+      ...(process.env.SERVER_URL ? [{
+        url: `http://localhost:${process.env.PORT || 3000}`,
+        description: 'Development server (localhost)',
+      }] : []),
     ],
     components: {
       securitySchemes: {
