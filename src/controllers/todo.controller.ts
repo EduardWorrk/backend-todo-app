@@ -12,7 +12,15 @@ export class TodoController {
    */
   async getTasks(req: Request, res: Response): Promise<void> {
     const userId = req.user!.id;
-    const tasks = await todoService.getUserTasks(userId);
+    const status = req.query.status as string | undefined;
+    const assigned = req.query.assigned === 'true';
+    const goalId = req.query.goalId ? parseInt(req.query.goalId as string) : undefined;
+
+    const tasks = await todoService.getUserTasks(userId, {
+      status,
+      assigned,
+      goalId,
+    });
 
     const response: TasksResponseDto = {
       status: 'success',
@@ -66,6 +74,50 @@ export class TodoController {
     const response: DeleteTaskResponseDto = {
       status: 'success',
       message: TODO_CONSTANTS.SUCCESS.DELETED,
+    };
+
+    res.json(response);
+  }
+
+  /**
+   * Назначить задачу исполнителю
+   */
+  async assignTask(req: Request, res: Response): Promise<void> {
+    const taskId = parseInt(req.params.id);
+    const userId = req.user!.id;
+    const assigneeId = parseInt(req.body.assigned_to_id);
+
+    if (!assigneeId) {
+      res.status(400).json({
+        status: 'error',
+        message: 'Необходимо указать assigned_to_id',
+      });
+      return;
+    }
+
+    const task = await todoService.assignTask(taskId, userId, assigneeId);
+
+    const response: TaskResponseDto = {
+      status: 'success',
+      message: 'Задача успешно назначена',
+      task,
+    };
+
+    res.json(response);
+  }
+
+  /**
+   * Снять назначение задачи
+   */
+  async unassignTask(req: Request, res: Response): Promise<void> {
+    const taskId = parseInt(req.params.id);
+    const userId = req.user!.id;
+    const task = await todoService.unassignTask(taskId, userId);
+
+    const response: TaskResponseDto = {
+      status: 'success',
+      message: 'Назначение успешно снято',
+      task,
     };
 
     res.json(response);

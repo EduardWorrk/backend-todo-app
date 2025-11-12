@@ -16,7 +16,24 @@ model User {
   email     String   @unique @db.VarChar(255)
   password  String   @db.VarChar(255)
   created_at DateTime @default(now()) @db.Timestamp(6)
+  
+  // Мои задачи
   tasks     Task[]
+  
+  // Совместные цели, где я владелец
+  owned_goals SharedGoal[] @relation("GoalOwner")
+  
+  // Совместные цели, где я участник
+  goal_members GoalMember[]
+  
+  // Задачи, назначенные мне
+  assigned_tasks Task[] @relation("TaskAssignee")
+  
+  // Комментарии
+  comments Comment[]
+  
+  // Уведомления
+  notifications Notification[]
 
   @@index([login])
   @@index([email])
@@ -24,14 +41,104 @@ model User {
 }
 
 model Task {
-  id         Int      @id @default(autoincrement())
-  user_id    Int
-  name       String   @db.VarChar(255)
-  description String? @db.Text
-  created_at DateTime @default(now()) @db.Timestamp(6)
-  updated_at DateTime @default(now()) @updatedAt @db.Timestamp(6)
-  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  id          Int      @id @default(autoincrement())
+  user_id     Int      // Владелец задачи
+  name        String   @db.VarChar(255)
+  description String?  @db.Text
+  status      String   @default("pending") // pending, in_progress, completed
+  created_at  DateTime @default(now()) @db.Timestamp(6)
+  updated_at  DateTime @default(now()) @updatedAt @db.Timestamp(6)
+  completed_at DateTime?
+  
+  // Связь с совместной целью
+  shared_goal_id Int?
+  shared_goal SharedGoal? @relation(fields: [shared_goal_id], references: [id], onDelete: SetNull)
+  
+  // Назначенный исполнитель
+  assigned_to_id Int?
+  assigned_to User? @relation("TaskAssignee", fields: [assigned_to_id], references: [id], onDelete: SetNull)
+  
+  // Владелец
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  // Комментарии
+  comments Comment[]
 
   @@index([user_id])
+  @@index([status])
+  @@index([shared_goal_id])
+  @@index([assigned_to_id])
+  @@index([completed_at])
   @@map("tasks")
+}
+
+model SharedGoal {
+  id          Int      @id @default(autoincrement())
+  name        String   @db.VarChar(255)
+  description String?  @db.Text
+  owner_id    Int      // Создатель цели
+  created_at  DateTime @default(now()) @db.Timestamp(6)
+  updated_at  DateTime @default(now()) @updatedAt @db.Timestamp(6)
+  
+  // Владелец
+  owner User @relation("GoalOwner", fields: [owner_id], references: [id], onDelete: Cascade)
+  
+  // Участники
+  members GoalMember[]
+  
+  // Задачи в этой цели
+  tasks Task[]
+  
+  @@index([owner_id])
+  @@map("shared_goals")
+}
+
+model GoalMember {
+  id         Int      @id @default(autoincrement())
+  goal_id    Int
+  user_id    Int
+  role       String   @default("member") // owner, admin, member
+  joined_at  DateTime @default(now())
+  
+  goal SharedGoal @relation(fields: [goal_id], references: [id], onDelete: Cascade)
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  @@unique([goal_id, user_id])
+  @@index([user_id])
+  @@index([goal_id])
+  @@map("goal_members")
+}
+
+model Comment {
+  id         Int      @id @default(autoincrement())
+  task_id    Int
+  user_id    Int
+  content    String   @db.Text
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @default(now()) @updatedAt @db.Timestamp(6)
+  
+  task Task @relation(fields: [task_id], references: [id], onDelete: Cascade)
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  @@index([task_id])
+  @@index([user_id])
+  @@map("comments")
+}
+
+model Notification {
+  id         Int      @id @default(autoincrement())
+  user_id    Int      // Кому уведомление
+  type       String   // task_assigned, task_completed, comment_added, goal_invited, etc.
+  title      String   @db.VarChar(255)
+  message    String   @db.Text
+  related_task_id Int?
+  related_goal_id Int?
+  is_read    Boolean  @default(false)
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  @@index([user_id])
+  @@index([is_read])
+  @@map("notifications")
 }

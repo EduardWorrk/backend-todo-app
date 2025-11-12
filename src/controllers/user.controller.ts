@@ -99,6 +99,29 @@ export class UserController {
 
     res.json(response);
   }
+
+  /**
+   * Поиск пользователей
+   */
+  async searchUsers(req: Request, res: Response): Promise<void> {
+    const query = req.query.q as string;
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
+
+    if (!query || query.length < 2) {
+      res.status(400).json({
+        status: 'error',
+        message: 'Поисковый запрос должен содержать минимум 2 символа',
+      });
+      return;
+    }
+
+    const users = await userService.searchUsers(query, limit);
+
+    res.json({
+      status: 'success',
+      users,
+    });
+  }
 }
 
 // Экспорт singleton экземпляра

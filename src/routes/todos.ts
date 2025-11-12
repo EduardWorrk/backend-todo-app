@@ -232,4 +232,67 @@ router.delete(
   })
 );
 
+/**
+ * @swagger
+ * /todos/{id}/assign:
+ *   patch:
+ *     summary: Назначить задачу исполнителю
+ *     tags: [Todos]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - assigned_to_id
+ *             properties:
+ *               assigned_to_id:
+ *                 type: integer
+ *     responses:
+ *       200:
+ *         description: Задача успешно назначена
+ */
+router.patch(
+  '/:id/assign',
+  validateTaskId,
+  asyncHandler(async (req, res) => {
+    await todoController.assignTask(req, res);
+  })
+);
+
+/**
+ * @swagger
+ * /todos/{id}/unassign:
+ *   patch:
+ *     summary: Снять назначение задачи
+ *     tags: [Todos]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Назначение успешно снято
+ */
+router.patch(
+  '/:id/unassign',
+  validateTaskId,
+  asyncHandler(async (req, res) => {
+    await todoController.unassignTask(req, res);
+  })
+);
+
 export default router;

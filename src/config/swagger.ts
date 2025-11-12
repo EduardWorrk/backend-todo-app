@@ -137,6 +137,39 @@ const options: swaggerJsdoc.Options = {
               example: 'Купить молоко в магазине',
               description: 'Описание задачи',
             },
+            status: {
+              type: 'string',
+              enum: ['pending', 'in_progress', 'completed'],
+              example: 'pending',
+              description: 'Статус задачи',
+            },
+            completed_at: {
+              type: 'string',
+              format: 'date-time',
+              nullable: true,
+              example: '2025-11-10T12:00:00.000Z',
+            },
+            assigned_to_id: {
+              type: 'integer',
+              nullable: true,
+              example: 2,
+              description: 'ID назначенного исполнителя',
+            },
+            shared_goal_id: {
+              type: 'integer',
+              nullable: true,
+              example: 1,
+              description: 'ID совместной цели',
+            },
+            assigned_to: {
+              type: 'object',
+              nullable: true,
+              properties: {
+                id: { type: 'integer' },
+                login: { type: 'string' },
+                email: { type: 'string' },
+              },
+            },
             created_at: {
               type: 'string',
               format: 'date-time',
@@ -164,6 +197,21 @@ const options: swaggerJsdoc.Options = {
               example: 'Купить молоко в магазине',
               description: 'Описание задачи (опциональное)',
             },
+            status: {
+              type: 'string',
+              enum: ['pending', 'in_progress', 'completed'],
+              example: 'pending',
+            },
+            shared_goal_id: {
+              type: 'integer',
+              nullable: true,
+              example: 1,
+            },
+            assigned_to_id: {
+              type: 'integer',
+              nullable: true,
+              example: 2,
+            },
           },
         },
         UpdateTaskRequest: {
@@ -180,6 +228,176 @@ const options: swaggerJsdoc.Options = {
               example: 'Купить молоко и хлеб в магазине',
               description: 'Новое описание задачи',
             },
+            status: {
+              type: 'string',
+              enum: ['pending', 'in_progress', 'completed'],
+              example: 'in_progress',
+            },
+            assigned_to_id: {
+              type: 'integer',
+              nullable: true,
+              example: 2,
+            },
+          },
+        },
+        // Goal Schemas
+        Goal: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer', example: 1 },
+            name: { type: 'string', example: 'Организовать корпоратив' },
+            description: { type: 'string', nullable: true, example: 'Подготовить мероприятие' },
+            owner_id: { type: 'integer', example: 1 },
+            created_at: { type: 'string', format: 'date-time' },
+            updated_at: { type: 'string', format: 'date-time' },
+          },
+        },
+        GoalMember: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer' },
+            goal_id: { type: 'integer' },
+            user_id: { type: 'integer' },
+            role: { type: 'string', enum: ['owner', 'admin', 'member'] },
+            joined_at: { type: 'string', format: 'date-time' },
+            user: { $ref: '#/components/schemas/User' },
+          },
+        },
+        CreateGoalRequest: {
+          type: 'object',
+          required: ['name'],
+          properties: {
+            name: { type: 'string', example: 'Организовать корпоратив' },
+            description: { type: 'string', nullable: true },
+            member_ids: { type: 'array', items: { type: 'integer' } },
+          },
+        },
+        UpdateGoalRequest: {
+          type: 'object',
+          properties: {
+            name: { type: 'string' },
+            description: { type: 'string', nullable: true },
+          },
+        },
+        InviteMemberRequest: {
+          type: 'object',
+          properties: {
+            user_id: { type: 'integer', example: 2 },
+            email: { type: 'string', format: 'email', example: 'user@example.com' },
+          },
+        },
+        GoalsResponse: {
+          type: 'object',
+          properties: {
+            status: { type: 'string' },
+            goals: { type: 'array', items: { $ref: '#/components/schemas/Goal' } },
+          },
+        },
+        GoalResponse: {
+          type: 'object',
+          properties: {
+            status: { type: 'string' },
+            message: { type: 'string' },
+            goal: {
+              type: 'object',
+              properties: {
+                id: { type: 'integer' },
+                name: { type: 'string' },
+                description: { type: 'string', nullable: true },
+                owner_id: { type: 'integer' },
+                created_at: { type: 'string', format: 'date-time' },
+                updated_at: { type: 'string', format: 'date-time' },
+                members: { type: 'array', items: { $ref: '#/components/schemas/GoalMember' } },
+                tasks_count: { type: 'integer' },
+                completed_tasks_count: { type: 'integer' },
+              },
+            },
+          },
+        },
+        GoalMembersResponse: {
+          type: 'object',
+          properties: {
+            status: { type: 'string' },
+            members: { type: 'array', items: { $ref: '#/components/schemas/GoalMember' } },
+          },
+        },
+        // Comment Schemas
+        Comment: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer' },
+            task_id: { type: 'integer' },
+            user_id: { type: 'integer' },
+            content: { type: 'string' },
+            created_at: { type: 'string', format: 'date-time' },
+            updated_at: { type: 'string', format: 'date-time' },
+            user: { $ref: '#/components/schemas/User' },
+          },
+        },
+        CreateCommentRequest: {
+          type: 'object',
+          required: ['content'],
+          properties: {
+            content: { type: 'string', example: 'Отличная идея!' },
+          },
+        },
+        UpdateCommentRequest: {
+          type: 'object',
+          required: ['content'],
+          properties: {
+            content: { type: 'string' },
+          },
+        },
+        CommentsResponse: {
+          type: 'object',
+          properties: {
+            status: { type: 'string' },
+            comments: { type: 'array', items: { $ref: '#/components/schemas/Comment' } },
+          },
+        },
+        CommentResponse: {
+          type: 'object',
+          properties: {
+            status: { type: 'string' },
+            message: { type: 'string' },
+            comment: { $ref: '#/components/schemas/Comment' },
+          },
+        },
+        // Notification Schemas
+        Notification: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer' },
+            user_id: { type: 'integer' },
+            type: { type: 'string' },
+            title: { type: 'string' },
+            message: { type: 'string' },
+            related_task_id: { type: 'integer', nullable: true },
+            related_goal_id: { type: 'integer', nullable: true },
+            is_read: { type: 'boolean' },
+            created_at: { type: 'string', format: 'date-time' },
+          },
+        },
+        NotificationsResponse: {
+          type: 'object',
+          properties: {
+            status: { type: 'string' },
+            notifications: { type: 'array', items: { $ref: '#/components/schemas/Notification' } },
+          },
+        },
+        NotificationResponse: {
+          type: 'object',
+          properties: {
+            status: { type: 'string' },
+            message: { type: 'string' },
+            notification: { $ref: '#/components/schemas/Notification' },
+          },
+        },
+        UnreadCountResponse: {
+          type: 'object',
+          properties: {
+            status: { type: 'string' },
+            count: { type: 'integer' },
           },
         },
         TasksResponse: {
@@ -257,6 +475,22 @@ const options: swaggerJsdoc.Options = {
       {
         name: 'Todos',
         description: 'Эндпоинты для управления задачами',
+      },
+      {
+        name: 'Users',
+        description: 'Эндпоинты для управления профилем пользователя',
+      },
+      {
+        name: 'Goals',
+        description: 'Эндпоинты для управления совместными целями',
+      },
+      {
+        name: 'Comments',
+        description: 'Эндпоинты для управления комментариями к задачам',
+      },
+      {
+        name: 'Notifications',
+        description: 'Эндпоинты для управления уведомлениями',
       },
     ],
   },

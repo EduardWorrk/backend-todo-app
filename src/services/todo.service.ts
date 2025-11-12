@@ -3,6 +3,8 @@ import { NotFoundError, ForbiddenError } from '../utils/errors';
 import { TODO_CONSTANTS } from '../constants/todo.constants';
 import { CreateTaskInput, UpdateTaskInput } from '../validators/todo.validator';
 import { TaskDto } from '../dto/todo.dto';
+import { notificationService } from './notification.service';
+import { NOTIFICATION_CONSTANTS } from '../constants/notification.constants';
 
 /**
  * Селекты для задач
@@ -12,8 +14,19 @@ const taskSelect = {
   user_id: true,
   name: true,
   description: true,
+  status: true,
+  completed_at: true,
+  assigned_to_id: true,
+  shared_goal_id: true,
   created_at: true,
   updated_at: true,
+  assigned_to: {
+    select: {
+      id: true,
+      login: true,
+      email: true,
+    },
+  },
 } as const;
 
 /**
@@ -23,9 +36,53 @@ export class TodoService {
   /**
    * Получить все задачи пользователя
    */
-  async getUserTasks(userId: number): Promise<TaskDto[]> {
+  async getUserTasks(
+    userId: number,
+    options?: { status?: string; assigned?: boolean; goalId?: number }
+  ): Promise<TaskDto[]> {
+    const where: any = {};
+
+    if (options?.assigned) {
+      // Задачи, назначенные пользователю
+      where.assigned_to_id = userId;
+    } else if (options?.goalId) {
+      // Задачи в конкретной цели
+      where.shared_goal_id = options.goalId;
+      // Проверка доступа к цели
+      const goal = await prisma.sharedGoal.findUnique({
+        where: { id: options.goalId },
+        select: {
+          owner_id: true,
+          members: {
+            where: { user_id: userId },
+            select: { user_id: true },
+          },
+        },
+      });
+
+      if (!goal || (goal.owner_id !== userId && goal.members.length === 0)) {
+        throw new ForbiddenError(TODO_CONSTANTS.ERRORS.NO_PERMISSION);
+      }
+    } else {
+      // Мои задачи (личные + в совместных целях, где я участник)
+      where.OR = [
+        { user_id: userId },
+        {
+          shared_goal: {
+            members: {
+              some: { user_id: userId },
+            },
+          },
+        },
+      ];
+    }
+
+    if (options?.status) {
+      where.status = options.status;
+    }
+
     const tasks = await prisma.task.findMany({
-      where: { user_id: userId },
+      where,
       orderBy: { created_at: 'desc' },
       select: taskSelect,
     });
@@ -37,12 +94,37 @@ export class TodoService {
    * Создать новую задачу
    */
   async createTask(userId: number, data: CreateTaskInput): Promise<TaskDto> {
+    // Если задача создается в совместной цели, проверяем доступ
+    if (data.shared_goal_id) {
+      await this.checkGoalAccess(data.shared_goal_id, userId);
+    }
+
+    const taskData: any = {
+      user_id: userId,
+      name: data.name,
+      description: data.description || null,
+      status: data.status || 'pending',
+    };
+
+    if (data.shared_goal_id) {
+      taskData.shared_goal_id = data.shared_goal_id;
+    }
+
+    if (data.assigned_to_id) {
+      taskData.assigned_to_id = data.assigned_to_id;
+      // Создание уведомления для назначенного пользователя
+      await notificationService.createNotification(
+        data.assigned_to_id,
+        NOTIFICATION_CONSTANTS.TYPES.TASK_ASSIGNED,
+        'Вам назначена задача',
+        `Вам назначена задача "${data.name}"`,
+        null,
+        data.shared_goal_id || null
+      );
+    }
+
     const task = await prisma.task.create({
-      data: {
-        user_id: userId,
-        name: data.name,
-        description: data.description || null,
-      },
+      data: taskData,
       select: taskSelect,
     });
 
@@ -57,11 +139,33 @@ export class TodoService {
     userId: number,
     data: UpdateTaskInput
   ): Promise<TaskDto> {
-    // Проверка существования и прав доступа
-    await this.checkTaskOwnership(taskId, userId);
+    // Получаем текущую задачу
+    const currentTask = await prisma.task.findUnique({
+      where: { id: taskId },
+      select: {
+        id: true,
+        user_id: true,
+        shared_goal_id: true,
+        status: true,
+        assigned_to_id: true,
+      },
+    });
+
+    if (!currentTask) {
+      throw new NotFoundError(TODO_CONSTANTS.ERRORS.TASK_NOT_FOUND);
+    }
+
+    // Проверка прав доступа
+    await this.checkTaskAccess(taskId, userId);
 
     // Подготовка данных для обновления
-    const updateData: { name?: string; description?: string | null } = {};
+    const updateData: {
+      name?: string;
+      description?: string | null;
+      status?: string;
+      completed_at?: Date | null;
+      assigned_to_id?: number | null;
+    } = {};
     
     if (data.name !== undefined) {
       updateData.name = data.name;
@@ -71,11 +175,65 @@ export class TodoService {
       updateData.description = data.description;
     }
 
+    if (data.status !== undefined) {
+      updateData.status = data.status;
+      
+      // Если статус изменен на completed, устанавливаем completed_at
+      if (data.status === 'completed' && currentTask.status !== 'completed') {
+        updateData.completed_at = new Date();
+      } else if (data.status !== 'completed' && currentTask.status === 'completed') {
+        updateData.completed_at = null;
+      }
+    }
+
+    if (data.assigned_to_id !== undefined) {
+      updateData.assigned_to_id = data.assigned_to_id;
+      
+      // Если назначение изменилось, создаем уведомление
+      if (data.assigned_to_id !== currentTask.assigned_to_id && data.assigned_to_id) {
+        const task = await prisma.task.findUnique({
+          where: { id: taskId },
+          select: { name: true },
+        });
+
+        await notificationService.createNotification(
+          data.assigned_to_id,
+          NOTIFICATION_CONSTANTS.TYPES.TASK_ASSIGNED,
+          'Вам назначена задача',
+          `Вам назначена задача "${task?.name || ''}"`,
+          taskId,
+          currentTask.shared_goal_id
+        );
+      }
+    }
+
     const task = await prisma.task.update({
       where: { id: taskId },
       data: updateData,
       select: taskSelect,
     });
+
+    // Если задача завершена, создаем уведомление для владельца и исполнителя
+    if (data.status === 'completed' && currentTask.status !== 'completed') {
+      const notifyUserIds = new Set<number>();
+      if (task.user_id !== userId) {
+        notifyUserIds.add(task.user_id);
+      }
+      if (task.assigned_to_id && task.assigned_to_id !== userId) {
+        notifyUserIds.add(task.assigned_to_id);
+      }
+
+      for (const notifyUserId of notifyUserIds) {
+        await notificationService.createNotification(
+          notifyUserId,
+          NOTIFICATION_CONSTANTS.TYPES.TASK_COMPLETED,
+          'Задача завершена',
+          `Задача "${task.name}" была завершена`,
+          taskId,
+          currentTask.shared_goal_id
+        );
+      }
+    }
 
     return task;
   }
@@ -85,7 +243,7 @@ export class TodoService {
    */
   async deleteTask(taskId: number, userId: number): Promise<void> {
     // Проверка существования и прав доступа
-    await this.checkTaskOwnership(taskId, userId);
+    await this.checkTaskAccess(taskId, userId);
 
     await prisma.task.delete({
       where: { id: taskId },
@@ -93,14 +251,85 @@ export class TodoService {
   }
 
   /**
+   * Получить задачу по ID
+   */
+  async getTaskById(taskId: number, userId: number): Promise<TaskDto> {
+    const task = await prisma.task.findUnique({
+      where: { id: taskId },
+      select: taskSelect,
+    });
+
+    if (!task) {
+      throw new NotFoundError(TODO_CONSTANTS.ERRORS.TASK_NOT_FOUND);
+    }
+
+    // Проверка доступа
+    await this.checkTaskAccess(taskId, userId);
+
+    return task;
+  }
+
+  /**
+   * Назначить задачу исполнителю
+   */
+  async assignTask(taskId: number, userId: number, assigneeId: number): Promise<TaskDto> {
+    // Проверка доступа
+    await this.checkTaskAccess(taskId, userId);
+
+    const task = await prisma.task.update({
+      where: { id: taskId },
+      data: { assigned_to_id: assigneeId },
+      select: taskSelect,
+    });
+
+    // Создание уведомления
+    await notificationService.createNotification(
+      assigneeId,
+      NOTIFICATION_CONSTANTS.TYPES.TASK_ASSIGNED,
+      'Вам назначена задача',
+      `Вам назначена задача "${task.name}"`,
+      taskId,
+      task.shared_goal_id
+    );
+
+    return task;
+  }
+
+  /**
+   * Снять назначение задачи
+   */
+  async unassignTask(taskId: number, userId: number): Promise<TaskDto> {
+    // Проверка доступа
+    await this.checkTaskAccess(taskId, userId);
+
+    const task = await prisma.task.update({
+      where: { id: taskId },
+      data: { assigned_to_id: null },
+      select: taskSelect,
+    });
+
+    return task;
+  }
+
+  /**
    * Проверка прав доступа к задаче
    */
-  private async checkTaskOwnership(taskId: number, userId: number): Promise<void> {
+  private async checkTaskAccess(taskId: number, userId: number): Promise<void> {
     const task = await prisma.task.findUnique({
       where: { id: taskId },
       select: {
         id: true,
         user_id: true,
+        shared_goal_id: true,
+        shared_goal: {
+          select: {
+            owner_id: true,
+            members: {
+              where: { user_id: userId },
+              select: { user_id: true },
+            },
+          },
+        },
       },
     });
 
@@ -108,8 +337,49 @@ export class TodoService {
       throw new NotFoundError(TODO_CONSTANTS.ERRORS.TASK_NOT_FOUND);
     }
 
-    if (task.user_id !== userId) {
-      throw new ForbiddenError(TODO_CONSTANTS.ERRORS.NO_PERMISSION);
+    // Владелец задачи всегда имеет доступ
+    if (task.user_id === userId) {
+      return;
+    }
+
+    // Если задача в совместной цели, проверяем участие
+    if (task.shared_goal_id && task.shared_goal) {
+      const isGoalOwner = task.shared_goal.owner_id === userId;
+      const isMember = task.shared_goal.members && task.shared_goal.members.length > 0;
+
+      if (isGoalOwner || isMember) {
+        return;
+      }
+    }
+
+    throw new ForbiddenError(TODO_CONSTANTS.ERRORS.NO_PERMISSION);
+  }
+
+  /**
+   * Проверка прав доступа к цели
+   */
+  private async checkGoalAccess(goalId: number, userId: number): Promise<void> {
+    const goal = await prisma.sharedGoal.findUnique({
+      where: { id: goalId },
+      select: {
+        id: true,
+        owner_id: true,
+        members: {
+          where: { user_id: userId },
+          select: { user_id: true },
+        },
+      },
+    });
+
+    if (!goal) {
+      throw new NotFoundError('Цель не найдена');
+    }
+
+    const isOwner = goal.owner_id === userId;
+    const isMember = goal.members.length > 0;
+
+    if (!isOwner && !isMember) {
+      throw new ForbiddenError('У вас нет доступа к этой цели');
     }
   }
 }

@@ -172,6 +172,37 @@ router.post(
 
 /**
  * @swagger
+ * /users/search:
+ *   get:
+ *     summary: Поиск пользователей по email или login
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Поисковый запрос (минимум 2 символа)
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *     responses:
+ *       200:
+ *         description: Список найденных пользователей
+ */
+router.get(
+  '/search',
+  asyncHandler(async (req, res) => {
+    await userController.searchUsers(req, res);
+  })
+);
+
+/**
+ * @swagger
  * /users/me/logout:
  *   post:
  *     summary: Выход пользователя

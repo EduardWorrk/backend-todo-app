@@ -6,6 +6,9 @@ import { initDatabase } from './db/init';
 import authRoutes from './routes/auth';
 import todosRoutes from './routes/todos';
 import usersRoutes from './routes/users';
+import goalsRoutes from './routes/goals';
+import commentsRoutes from './routes/comments';
+import notificationsRoutes from './routes/notifications';
 import { errorHandler } from './middleware/error-handler';
 import { swaggerSpec } from './config/swagger';
 
@@ -60,6 +63,15 @@ app.use('/todos', todosRoutes);
 
 // Роуты пользователя
 app.use('/users', usersRoutes);
+
+// Роуты совместных целей
+app.use('/goals', goalsRoutes);
+
+// Роуты комментариев
+app.use('/', commentsRoutes);
+
+// Роуты уведомлений
+app.use('/notifications', notificationsRoutes);
 
 // Централизованный обработчик ошибок (должен быть последним)
 app.use(errorHandler);

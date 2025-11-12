@@ -173,6 +173,24 @@ export class UserService {
   }
 
   /**
+   * Поиск пользователей по email или login
+   */
+  async searchUsers(query: string, limit: number = 10): Promise<UserProfileDto[]> {
+    const users = await prisma.user.findMany({
+      where: {
+        OR: [
+          { email: { contains: query, mode: 'insensitive' } },
+          { login: { contains: query, mode: 'insensitive' } },
+        ],
+      },
+      take: limit,
+      select: userSelect,
+    });
+
+    return users;
+  }
+
+  /**
    * Проверка существования пользователя при обновлении
    */
   private async checkUserExistsForUpdate(
