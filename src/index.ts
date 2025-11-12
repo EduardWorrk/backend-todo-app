@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import swaggerUi from 'swagger-ui-express';
+import path from 'path';
 import prisma from './db/prisma';
 import { initDatabase } from './db/init';
 import authRoutes from './routes/auth';
@@ -11,6 +12,7 @@ import commentsRoutes from './routes/comments';
 import notificationsRoutes from './routes/notifications';
 import { errorHandler } from './middleware/error-handler';
 import { swaggerSpec } from './config/swagger';
+import { USER_CONSTANTS } from './constants/user.constants';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -18,12 +20,15 @@ const PORT = process.env.PORT || 3000;
 // Настройка CORS
 app.use(cors({
   origin: '*', // Разрешить все источники (для разработки)
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
 }));
 
 app.use(express.json());
+
+// Раздача статических файлов (аватары)
+app.use('/uploads/avatars', express.static(path.join(process.cwd(), USER_CONSTANTS.AVATAR.UPLOAD_PATH)));
 
 // Swagger UI документация
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {

@@ -30,6 +30,12 @@ RUN npm install --only=production
 # Copy built files from builder
 COPY --from=builder /app/dist ./dist
 
+# Copy Prisma schema and migrations
+COPY prisma ./prisma
+
+# Create uploads directory
+RUN mkdir -p uploads/avatars
+
 # Expose port
 EXPOSE 3000
 

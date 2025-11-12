@@ -6,6 +6,7 @@ export interface UserBasicDto {
   id: number;
   login: string;
   email: string;
+  avatar_url: string | null;
 }
 
 export interface TaskDto {

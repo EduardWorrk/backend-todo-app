@@ -21,6 +21,7 @@ const commentSelect = {
       id: true,
       login: true,
       email: true,
+      avatar_url: true,
     },
   },
 } as const;

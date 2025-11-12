@@ -3,10 +3,12 @@ import bcrypt from 'bcrypt';
 import { generateToken } from '../utils/jwt';
 import { AUTH_CONSTANTS } from '../constants/auth.constants';
 import { USER_CONSTANTS } from '../constants/user.constants';
-import { ConflictError, AuthenticationError, NotFoundError } from '../utils/errors';
+import { ConflictError, AuthenticationError, NotFoundError, BadRequestError } from '../utils/errors';
 import { UpdateProfileInput, ChangePasswordInput } from '../validators/user.validator';
 import { UserProfileDto } from '../dto/user.dto';
 import { SecurityLogger } from '../utils/security-logger';
+import { processAvatar, deleteAvatarFiles, getAvatarUrl } from '../utils/file-upload';
+import path from 'path';
 
 /**
  * Селекты для пользователя
@@ -15,6 +17,7 @@ const userSelect = {
   id: true,
   login: true,
   email: true,
+  avatar_url: true,
   created_at: true,
 } as const;
 
@@ -224,6 +227,91 @@ export class UserService {
       throw new ConflictError(USER_CONSTANTS.ERRORS.LOGIN_EXISTS);
     } else if (existingUser.email === email) {
       throw new ConflictError(USER_CONSTANTS.ERRORS.EMAIL_EXISTS);
+    }
+  }
+
+  /**
+   * Загрузить аватар пользователя
+   */
+  async uploadAvatar(
+    userId: number,
+    file: Express.Multer.File
+  ): Promise<{ avatar_url: string }> {
+    if (!file) {
+      throw new BadRequestError(USER_CONSTANTS.ERRORS.AVATAR_NOT_PROVIDED);
+    }
+
+    // Получаем текущего пользователя
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, avatar_url: true },
+    });
+
+    if (!user) {
+      throw new NotFoundError(USER_CONSTANTS.ERRORS.USER_NOT_FOUND);
+    }
+
+    try {
+      // Удаляем старый аватар, если есть
+      if (user.avatar_url) {
+        await deleteAvatarFiles(userId, user.avatar_url);
+      }
+
+      // Обрабатываем новое изображение
+      const ext = path.extname(file.originalname).toLowerCase();
+      const processedPaths = await processAvatar(file.buffer!, userId, ext);
+
+      // Генерируем URL для medium размера (по умолчанию)
+      // Извлекаем baseName из пути оригинального файла
+      const originalFilename = path.basename(processedPaths.original);
+      const baseName = path.basename(originalFilename, ext); // original-1234567890-123456789
+      const avatarUrl = getAvatarUrl(userId, baseName, ext, 'medium');
+
+      // Обновляем avatar_url в базе данных
+      await prisma.user.update({
+        where: { id: userId },
+        data: { avatar_url: avatarUrl },
+      });
+
+      return { avatar_url: avatarUrl };
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new BadRequestError(error.message);
+      }
+      throw new BadRequestError(USER_CONSTANTS.ERRORS.AVATAR_UPLOAD_FAILED);
+    }
+  }
+
+  /**
+   * Удалить аватар пользователя
+   */
+  async deleteAvatar(userId: number): Promise<void> {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, avatar_url: true },
+    });
+
+    if (!user) {
+      throw new NotFoundError(USER_CONSTANTS.ERRORS.USER_NOT_FOUND);
+    }
+
+    if (!user.avatar_url) {
+      // Аватар уже отсутствует, ничего не делаем
+      return;
+    }
+
+    try {
+      // Удаляем файлы аватара
+      await deleteAvatarFiles(userId, user.avatar_url);
+
+      // Обновляем avatar_url в базе данных
+      await prisma.user.update({
+        where: { id: userId },
+        data: { avatar_url: null },
+      });
+    } catch (error) {
+      console.error('Error deleting avatar:', error);
+      throw new BadRequestError(USER_CONSTANTS.ERRORS.AVATAR_DELETE_FAILED);
     }
   }
 }
