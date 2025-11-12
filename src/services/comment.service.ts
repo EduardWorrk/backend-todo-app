@@ -53,10 +53,13 @@ export class CommentService {
     const task = await prisma.task.findUnique({
       where: { id: taskId },
       select: {
+        id: true,
         user_id: true,
         shared_goal_id: true,
         shared_goal: {
           select: {
+            id: true,
+            owner_id: true,
             members: {
               select: { user_id: true },
             },
