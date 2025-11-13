@@ -40,6 +40,9 @@ RUN npm install --only=production --ignore-scripts=false
 # Copy built files from builder
 COPY --from=builder /app/dist ./dist
 
+# Copy source files for Swagger JSDoc (нужны для генерации документации)
+COPY --from=builder /app/src ./src
+
 # Create uploads directory
 RUN mkdir -p uploads/avatars
 
