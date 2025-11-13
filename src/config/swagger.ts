@@ -149,12 +149,6 @@ const options: swaggerJsdoc.Options = {
               type: 'string',
               example: 'john@example.com',
             },
-            avatar_url: {
-              type: 'string',
-              nullable: true,
-              example: '/uploads/avatars/1/original-1234567890-medium.jpg',
-              description: 'URL аватара пользователя',
-            },
             created_at: {
               type: 'string',
               format: 'date-time',

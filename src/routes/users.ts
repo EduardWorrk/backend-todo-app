@@ -3,7 +3,6 @@ import { userController } from '../controllers/user.controller';
 import { validate, updateProfileSchema, changePasswordSchema } from '../validators/user.validator';
 import { asyncHandler } from '../middleware/error-handler';
 import authenticateToken from '../middleware/auth';
-import { uploadAvatar } from '../utils/file-upload';
 
 const router = Router();
 
@@ -48,10 +47,6 @@ router.use(authenticateToken);
  *                     email:
  *                       type: string
  *                       example: john@example.com
- *                     avatar_url:
- *                       type: string
- *                       nullable: true
- *                       example: /uploads/avatars/1/original-1234567890-medium.jpg
  *                     created_at:
  *                       type: string
  *                       format: date-time
@@ -232,87 +227,6 @@ router.post(
   '/me/logout',
   asyncHandler(async (req, res) => {
     await userController.logout(req, res);
-  })
-);
-
-/**
- * @swagger
- * /users/me/avatar:
- *   post:
- *     summary: Загрузить аватар пользователя
- *     tags: [Users]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         multipart/form-data:
- *           schema:
- *             type: object
- *             required:
- *               - avatar
- *             properties:
- *               avatar:
- *                 type: string
- *                 format: binary
- *                 description: Файл изображения (jpg, png, webp, макс 5MB)
- *     responses:
- *       200:
- *         description: Аватар успешно загружен
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 status:
- *                   type: string
- *                   example: success
- *                 message:
- *                   type: string
- *                 avatar_url:
- *                   type: string
- *                   example: /uploads/avatars/1/original-1234567890-medium.jpg
- *       400:
- *         description: Ошибка валидации файла
- *       401:
- *         description: Токен не предоставлен или невалиден
- */
-router.post(
-  '/me/avatar',
-  uploadAvatar.single('avatar'),
-  asyncHandler(async (req, res) => {
-    await userController.uploadAvatar(req, res);
-  })
-);
-
-/**
- * @swagger
- * /users/me/avatar:
- *   delete:
- *     summary: Удалить аватар пользователя
- *     tags: [Users]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Аватар успешно удален
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 status:
- *                   type: string
- *                   example: success
- *                 message:
- *                   type: string
- *       401:
- *         description: Токен не предоставлен или невалиден
- */
-router.delete(
-  '/me/avatar',
-  asyncHandler(async (req, res) => {
-    await userController.deleteAvatar(req, res);
   })
 );
 

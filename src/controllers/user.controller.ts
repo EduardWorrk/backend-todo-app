@@ -6,8 +6,6 @@ import {
   ChangePasswordResponseDto,
   RefreshTokenResponseDto,
   LogoutResponseDto,
-  UploadAvatarResponseDto,
-  DeleteAvatarResponseDto,
 } from '../dto/user.dto';
 import { getClientIp, getUserAgent } from '../utils/security-logger';
 
@@ -123,53 +121,6 @@ export class UserController {
       status: 'success',
       users,
     });
-  }
-
-  /**
-   * Загрузить аватар пользователя
-   */
-  async uploadAvatar(req: Request, res: Response): Promise<void> {
-    const userId = req.user!.id;
-    const file = req.file;
-
-    if (!file) {
-      res.status(400).json({
-        status: 'error',
-        message: USER_CONSTANTS.ERRORS.AVATAR_NOT_PROVIDED,
-      });
-      return;
-    }
-
-    try {
-      const result = await userService.uploadAvatar(userId, file);
-
-      const response: UploadAvatarResponseDto = {
-        status: 'success',
-        message: USER_CONSTANTS.SUCCESS.AVATAR_UPLOADED,
-        avatar_url: result.avatar_url,
-      };
-
-      res.json(response);
-    } catch (error) {
-      // Ошибка уже обработана в сервисе
-      throw error;
-    }
-  }
-
-  /**
-   * Удалить аватар пользователя
-   */
-  async deleteAvatar(req: Request, res: Response): Promise<void> {
-    const userId = req.user!.id;
-
-    await userService.deleteAvatar(userId);
-
-    const response: DeleteAvatarResponseDto = {
-      status: 'success',
-      message: USER_CONSTANTS.SUCCESS.AVATAR_DELETED,
-    };
-
-    res.json(response);
   }
 }
 
