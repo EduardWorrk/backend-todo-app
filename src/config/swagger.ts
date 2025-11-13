@@ -1,4 +1,34 @@
 import swaggerJsdoc from 'swagger-jsdoc';
+import path from 'path';
+import { existsSync, readdirSync } from 'fs';
+
+// Определяем абсолютные пути к файлам с JSDoc
+const baseDir = process.cwd();
+const routesPath = path.join(baseDir, 'src', 'routes', '*.ts');
+const indexPath = path.join(baseDir, 'src', 'index.ts');
+
+// Отладочная информация (только в production для диагностики)
+const isProduction = process.env.NODE_ENV === 'production' || process.env.SERVER_URL;
+if (isProduction) {
+  console.log('[Swagger] Initializing...');
+  console.log('[Swagger] Base directory:', baseDir);
+  console.log('[Swagger] Routes path:', routesPath);
+  console.log('[Swagger] Index path:', indexPath);
+  
+  const routesDir = path.join(baseDir, 'src', 'routes');
+  if (existsSync(routesDir)) {
+    const files = readdirSync(routesDir).filter(f => f.endsWith('.ts'));
+    console.log('[Swagger] Found route files:', files.length, files);
+  } else {
+    console.error('[Swagger] ERROR: Routes directory not found at:', routesDir);
+  }
+  
+  if (existsSync(indexPath)) {
+    console.log('[Swagger] Index file found');
+  } else {
+    console.error('[Swagger] ERROR: Index file not found at:', indexPath);
+  }
+}
 
 const options: swaggerJsdoc.Options = {
   definition: {
@@ -505,8 +535,22 @@ const options: swaggerJsdoc.Options = {
       },
     ],
   },
-  apis: ['./src/routes/*.ts', './src/index.ts'], // Пути к файлам с JSDoc комментариями
+  apis: [routesPath, indexPath], // Абсолютные пути к файлам с JSDoc комментариями
 };
 
 export const swaggerSpec = swaggerJsdoc(options);
+
+// Логируем результат генерации (только в production)
+if (isProduction) {
+  const pathsCount = Object.keys(swaggerSpec.paths || {}).length;
+  const tagsCount = swaggerSpec.tags?.length || 0;
+  console.log(`[Swagger] Generated spec: ${pathsCount} paths, ${tagsCount} tags`);
+  
+  if (pathsCount === 0) {
+    console.error('[Swagger] WARNING: No paths found in Swagger spec!');
+    console.error('[Swagger] This usually means JSDoc comments were not found in route files.');
+  } else {
+    console.log('[Swagger] Available paths:', Object.keys(swaggerSpec.paths || {}).slice(0, 5).join(', '), '...');
+  }
+}
 
