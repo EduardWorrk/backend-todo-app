@@ -81,7 +81,38 @@ app.use('/notifications', notificationsRoutes);
 // Централизованный обработчик ошибок (должен быть последним)
 app.use(errorHandler);
 
+// Endpoint для диагностики Swagger
+app.get('/api-docs/info', (req: Request, res: Response) => {
+  const spec = swaggerSpec as any; // Type assertion для доступа к paths и tags
+  const pathsCount = Object.keys(spec.paths || {}).length;
+  const tagsCount = spec.tags?.length || 0;
+  const paths = Object.keys(spec.paths || {});
+  
+  res.json({
+    status: 'ok',
+    swagger: {
+      pathsCount,
+      tagsCount,
+      paths: paths.slice(0, 20), // Первые 20 путей
+      allPaths: paths,
+      hasPaths: pathsCount > 0,
+    },
+    environment: {
+      NODE_ENV: process.env.NODE_ENV,
+      SERVER_URL: process.env.SERVER_URL,
+      PORT: process.env.PORT,
+      cwd: process.cwd(),
+    },
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
+  const spec = swaggerSpec as any; // Type assertion для доступа к paths
+  const pathsCount = Object.keys(spec.paths || {}).length;
+  console.log(`[Swagger] Swagger spec loaded: ${pathsCount} paths`);
+  if (pathsCount === 0) {
+    console.error('[Swagger] WARNING: Swagger spec is empty! Check /api-docs/info for details');
+  }
 });
 

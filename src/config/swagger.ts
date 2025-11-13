@@ -2,18 +2,15 @@ import swaggerJsdoc from 'swagger-jsdoc';
 import path from 'path';
 import { existsSync, readdirSync } from 'fs';
 
-// Определяем абсолютные пути к файлам с JSDoc
+// Определяем пути к файлам с JSDoc
 const baseDir = process.cwd();
-const routesPath = path.join(baseDir, 'src', 'routes', '*.ts');
-const indexPath = path.join(baseDir, 'src', 'index.ts');
+const isProduction = process.env.NODE_ENV === 'production' || process.env.SERVER_URL;
 
 // Отладочная информация (только в production для диагностики)
-const isProduction = process.env.NODE_ENV === 'production' || process.env.SERVER_URL;
 if (isProduction) {
   console.log('[Swagger] Initializing...');
   console.log('[Swagger] Base directory:', baseDir);
-  console.log('[Swagger] Routes path:', routesPath);
-  console.log('[Swagger] Index path:', indexPath);
+  console.log('[Swagger] Current working directory:', process.cwd());
   
   const routesDir = path.join(baseDir, 'src', 'routes');
   if (existsSync(routesDir)) {
@@ -23,10 +20,41 @@ if (isProduction) {
     console.error('[Swagger] ERROR: Routes directory not found at:', routesDir);
   }
   
+  const indexPath = path.join(baseDir, 'src', 'index.ts');
   if (existsSync(indexPath)) {
     console.log('[Swagger] Index file found');
   } else {
     console.error('[Swagger] ERROR: Index file not found at:', indexPath);
+  }
+}
+
+// Определяем пути к файлам для swagger-jsdoc
+// swagger-jsdoc использует glob, который работает лучше с относительными путями
+// Но также поддерживает абсолютные пути, если они правильно сформированы
+let apiPaths: string[];
+
+// Пробуем использовать относительные пути (работает в большинстве случаев)
+const relativeRoutesPath = './src/routes/*.ts';
+const relativeIndexPath = './src/index.ts';
+
+// Проверяем, существуют ли файлы по относительным путям
+const routesDir = path.join(baseDir, 'src', 'routes');
+const indexPath = path.join(baseDir, 'src', 'index.ts');
+
+if (existsSync(routesDir) && existsSync(indexPath)) {
+  // Используем относительные пути, если файлы существуют
+  apiPaths = [relativeRoutesPath, relativeIndexPath];
+  if (isProduction) {
+    console.log('[Swagger] Using relative paths:', apiPaths);
+  }
+} else {
+  // Fallback: используем абсолютные пути
+  apiPaths = [
+    path.join(baseDir, 'src', 'routes', '*.ts'),
+    path.join(baseDir, 'src', 'index.ts'),
+  ];
+  if (isProduction) {
+    console.log('[Swagger] Using absolute paths:', apiPaths);
   }
 }
 
@@ -535,22 +563,24 @@ const options: swaggerJsdoc.Options = {
       },
     ],
   },
-  apis: [routesPath, indexPath], // Абсолютные пути к файлам с JSDoc комментариями
+  apis: apiPaths, // Пути к файлам с JSDoc комментариями
 };
 
 export const swaggerSpec = swaggerJsdoc(options);
 
 // Логируем результат генерации (только в production)
 if (isProduction) {
-  const pathsCount = Object.keys(swaggerSpec.paths || {}).length;
-  const tagsCount = swaggerSpec.tags?.length || 0;
+  const spec = swaggerSpec as any; // Type assertion для доступа к paths и tags
+  const pathsCount = Object.keys(spec.paths || {}).length;
+  const tagsCount = spec.tags?.length || 0;
   console.log(`[Swagger] Generated spec: ${pathsCount} paths, ${tagsCount} tags`);
   
   if (pathsCount === 0) {
     console.error('[Swagger] WARNING: No paths found in Swagger spec!');
     console.error('[Swagger] This usually means JSDoc comments were not found in route files.');
+    console.error('[Swagger] Check if route files contain @swagger JSDoc comments.');
   } else {
-    console.log('[Swagger] Available paths:', Object.keys(swaggerSpec.paths || {}).slice(0, 5).join(', '), '...');
+    console.log('[Swagger] Available paths:', Object.keys(spec.paths || {}).slice(0, 5).join(', '), '...');
   }
 }
 
