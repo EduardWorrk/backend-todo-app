@@ -7,7 +7,10 @@ WORKDIR /app
 COPY package*.json ./
 COPY tsconfig.json ./
 
-# Install dependencies
+# Copy Prisma schema BEFORE npm install (чтобы postinstall мог найти schema)
+COPY prisma ./prisma
+
+# Install dependencies (postinstall запустит prisma generate)
 RUN npm install
 
 # Copy source code
@@ -24,11 +27,17 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install only production dependencies
-RUN npm install --only=production
+# Copy Prisma schema BEFORE npm install (чтобы postinstall мог найти schema)
+COPY prisma ./prisma
+
+# Install only production dependencies (postinstall запустит prisma generate)
+RUN npm install --only=production --ignore-scripts=false
 
 # Copy built files from builder
 COPY --from=builder /app/dist ./dist
+
+# Copy source files for Swagger JSDoc (нужны для генерации документации)
+COPY --from=builder /app/src ./src
 
 # Expose port
 EXPOSE 3000

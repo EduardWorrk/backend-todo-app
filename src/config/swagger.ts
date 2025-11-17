@@ -2,48 +2,33 @@ import swaggerJsdoc from 'swagger-jsdoc';
 import path from 'path';
 import { existsSync, readdirSync } from 'fs';
 
-// Определяем пути к файлам с JSDoc
 const baseDir = process.cwd();
-const isProduction = process.env.NODE_ENV === 'production' || process.env.SERVER_URL;
 
-// Отладочная информация (для диагностики)
-console.log('[Swagger] Initializing...');
-console.log('[Swagger] Base directory:', baseDir);
-console.log('[Swagger] Current working directory:', process.cwd());
-console.log('[Swagger] NODE_ENV:', process.env.NODE_ENV);
-console.log('[Swagger] SERVER_URL:', process.env.SERVER_URL);
-console.log('[Swagger] Is production:', isProduction);
+// Определяем, TS или JS проекта
+const isTs = existsSync(path.join(baseDir, 'src'));
+const routesDir = isTs
+  ? path.join(baseDir, 'src', 'routes')
+  : path.join(baseDir, 'dist', 'routes');
 
-// Определяем пути к файлам для swagger-jsdoc
-// Явно указываем все файлы роутов вместо glob паттерна для лучшей совместимости
-const routesDir = path.join(baseDir, 'src', 'routes');
-const indexPath = path.join(baseDir, 'src', 'index.ts');
+const indexPath = isTs
+  ? path.join(baseDir, 'src', 'index.ts')
+  : path.join(baseDir, 'dist', 'index.js');
 
 let apiPaths: string[] = [];
 
-// Проверяем существование директории роутов
 if (existsSync(routesDir)) {
   const routeFiles = readdirSync(routesDir)
-    .filter(f => f.endsWith('.ts'))
+    .filter(f => f.endsWith(isTs ? '.ts' : '.js'))
     .map(f => path.join(routesDir, f));
-  
-  console.log('[Swagger] Found route files:', routeFiles.length, routeFiles.map(f => path.basename(f)));
-  
-  // Добавляем все файлы роутов явно
+
   apiPaths.push(...routeFiles);
 } else {
-  console.error('[Swagger] ERROR: Routes directory not found at:', routesDir);
+  console.error('[Swagger] Routes directory not found:', routesDir);
 }
 
-// Добавляем index.ts
 if (existsSync(indexPath)) {
-  console.log('[Swagger] Index file found');
   apiPaths.push(indexPath);
-} else {
-  console.error('[Swagger] ERROR: Index file not found at:', indexPath);
 }
-
-console.log('[Swagger] API paths to scan:', apiPaths.length, 'files');
 
 const options: swaggerJsdoc.Options = {
   definition: {
@@ -67,6 +52,8 @@ const options: swaggerJsdoc.Options = {
         description: 'Development server (localhost)',
       }] : []),
     ],
+    // Убеждаемся, что пути всегда относительные (Swagger UI добавит базовый URL)
+    // Это стандартное поведение OpenAPI - пути должны быть относительными
     components: {
       securitySchemes: {
         bearerAuth: {

@@ -32,6 +32,13 @@ const swaggerUiOptions = {
   swaggerOptions: {
     persistAuthorization: true, // Сохранять авторизацию при перезагрузке
     displayRequestDuration: true, // Показывать время выполнения запросов
+    // Убеждаемся, что Swagger UI использует правильный базовый URL
+    url: undefined, // Используем spec из объекта, а не из URL
+    // Если нужно явно указать сервер по умолчанию
+    ...(process.env.SERVER_URL ? {
+      defaultModelsExpandDepth: 1,
+      defaultModelExpandDepth: 1,
+    } : {}),
   },
 };
 
