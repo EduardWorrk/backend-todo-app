@@ -26,10 +26,17 @@ app.use(cors({
 app.use(express.json());
 
 // Swagger UI документация
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+const swaggerUiOptions = {
   customCss: '.swagger-ui .topbar { display: none }',
   customSiteTitle: 'Todo API Documentation',
-}));
+  swaggerOptions: {
+    persistAuthorization: true, // Сохранять авторизацию при перезагрузке
+    displayRequestDuration: true, // Показывать время выполнения запросов
+  },
+};
+
+// Настройка Swagger UI - правильный синтаксис
+app.use('/api-docs', ...swaggerUi.serve, swaggerUi.setup(swaggerSpec, swaggerUiOptions));
 
 // Инициализация базы данных при запуске
 initDatabase().catch(console.error);
@@ -76,6 +83,12 @@ app.use('/notifications', notificationsRoutes);
 // Централизованный обработчик ошибок (должен быть последним)
 app.use(errorHandler);
 
+// Endpoint для получения сырой Swagger спецификации (JSON)
+app.get('/api-docs.json', (req: Request, res: Response) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.json(swaggerSpec);
+});
+
 // Endpoint для диагностики Swagger
 app.get('/api-docs/info', (req: Request, res: Response) => {
   const spec = swaggerSpec as any; // Type assertion для доступа к paths и tags
@@ -91,6 +104,7 @@ app.get('/api-docs/info', (req: Request, res: Response) => {
       paths: paths.slice(0, 20), // Первые 20 путей
       allPaths: paths,
       hasPaths: pathsCount > 0,
+      servers: spec.servers || [],
     },
     environment: {
       NODE_ENV: process.env.NODE_ENV,

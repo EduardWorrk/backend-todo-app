@@ -6,57 +6,44 @@ import { existsSync, readdirSync } from 'fs';
 const baseDir = process.cwd();
 const isProduction = process.env.NODE_ENV === 'production' || process.env.SERVER_URL;
 
-// Отладочная информация (только в production для диагностики)
-if (isProduction) {
-  console.log('[Swagger] Initializing...');
-  console.log('[Swagger] Base directory:', baseDir);
-  console.log('[Swagger] Current working directory:', process.cwd());
-  
-  const routesDir = path.join(baseDir, 'src', 'routes');
-  if (existsSync(routesDir)) {
-    const files = readdirSync(routesDir).filter(f => f.endsWith('.ts'));
-    console.log('[Swagger] Found route files:', files.length, files);
-  } else {
-    console.error('[Swagger] ERROR: Routes directory not found at:', routesDir);
-  }
-  
-  const indexPath = path.join(baseDir, 'src', 'index.ts');
-  if (existsSync(indexPath)) {
-    console.log('[Swagger] Index file found');
-  } else {
-    console.error('[Swagger] ERROR: Index file not found at:', indexPath);
-  }
-}
+// Отладочная информация (для диагностики)
+console.log('[Swagger] Initializing...');
+console.log('[Swagger] Base directory:', baseDir);
+console.log('[Swagger] Current working directory:', process.cwd());
+console.log('[Swagger] NODE_ENV:', process.env.NODE_ENV);
+console.log('[Swagger] SERVER_URL:', process.env.SERVER_URL);
+console.log('[Swagger] Is production:', isProduction);
 
 // Определяем пути к файлам для swagger-jsdoc
-// swagger-jsdoc использует glob, который работает лучше с относительными путями
-// Но также поддерживает абсолютные пути, если они правильно сформированы
-let apiPaths: string[];
-
-// Пробуем использовать относительные пути (работает в большинстве случаев)
-const relativeRoutesPath = './src/routes/*.ts';
-const relativeIndexPath = './src/index.ts';
-
-// Проверяем, существуют ли файлы по относительным путям
+// Явно указываем все файлы роутов вместо glob паттерна для лучшей совместимости
 const routesDir = path.join(baseDir, 'src', 'routes');
 const indexPath = path.join(baseDir, 'src', 'index.ts');
 
-if (existsSync(routesDir) && existsSync(indexPath)) {
-  // Используем относительные пути, если файлы существуют
-  apiPaths = [relativeRoutesPath, relativeIndexPath];
-  if (isProduction) {
-    console.log('[Swagger] Using relative paths:', apiPaths);
-  }
+let apiPaths: string[] = [];
+
+// Проверяем существование директории роутов
+if (existsSync(routesDir)) {
+  const routeFiles = readdirSync(routesDir)
+    .filter(f => f.endsWith('.ts'))
+    .map(f => path.join(routesDir, f));
+  
+  console.log('[Swagger] Found route files:', routeFiles.length, routeFiles.map(f => path.basename(f)));
+  
+  // Добавляем все файлы роутов явно
+  apiPaths.push(...routeFiles);
 } else {
-  // Fallback: используем абсолютные пути
-  apiPaths = [
-    path.join(baseDir, 'src', 'routes', '*.ts'),
-    path.join(baseDir, 'src', 'index.ts'),
-  ];
-  if (isProduction) {
-    console.log('[Swagger] Using absolute paths:', apiPaths);
-  }
+  console.error('[Swagger] ERROR: Routes directory not found at:', routesDir);
 }
+
+// Добавляем index.ts
+if (existsSync(indexPath)) {
+  console.log('[Swagger] Index file found');
+  apiPaths.push(indexPath);
+} else {
+  console.error('[Swagger] ERROR: Index file not found at:', indexPath);
+}
+
+console.log('[Swagger] API paths to scan:', apiPaths.length, 'files');
 
 const options: swaggerJsdoc.Options = {
   definition: {
@@ -560,10 +547,11 @@ const options: swaggerJsdoc.Options = {
   apis: apiPaths, // Пути к файлам с JSDoc комментариями
 };
 
-export const swaggerSpec = swaggerJsdoc(options);
-
-// Логируем результат генерации (только в production)
-if (isProduction) {
+let swaggerSpec: any;
+try {
+  swaggerSpec = swaggerJsdoc(options);
+  
+  // Логируем результат генерации
   const spec = swaggerSpec as any; // Type assertion для доступа к paths и tags
   const pathsCount = Object.keys(spec.paths || {}).length;
   const tagsCount = spec.tags?.length || 0;
@@ -573,8 +561,24 @@ if (isProduction) {
     console.error('[Swagger] WARNING: No paths found in Swagger spec!');
     console.error('[Swagger] This usually means JSDoc comments were not found in route files.');
     console.error('[Swagger] Check if route files contain @swagger JSDoc comments.');
+    console.error('[Swagger] API paths used:', apiPaths);
+    console.error('[Swagger] Full spec keys:', Object.keys(spec));
   } else {
-    console.log('[Swagger] Available paths:', Object.keys(spec.paths || {}).slice(0, 5).join(', '), '...');
+    const paths = Object.keys(spec.paths || {});
+    console.log('[Swagger] Available paths:', paths.slice(0, 10).join(', '), paths.length > 10 ? '...' : '');
   }
+} catch (error) {
+  console.error('[Swagger] ERROR generating spec:', error);
+  // Создаем пустой spec в случае ошибки
+  swaggerSpec = {
+    openapi: '3.0.0',
+    info: {
+      title: 'Todo API',
+      version: '1.0.0',
+    },
+    paths: {},
+  };
 }
+
+export { swaggerSpec };
 
