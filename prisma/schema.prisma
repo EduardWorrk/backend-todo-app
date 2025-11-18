@@ -46,6 +46,8 @@ model Task {
   name        String   @db.VarChar(255)
   description String?  @db.Text
   status      String   @default("pending") // pending, in_progress, completed
+  priority    String?  @db.VarChar(16)
+  task_time   String?  @db.VarChar(8)
   created_at  DateTime @default(now()) @db.Timestamp(6)
   updated_at  DateTime @default(now()) @updatedAt @db.Timestamp(6)
   completed_at DateTime?

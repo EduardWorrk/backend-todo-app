@@ -14,6 +14,8 @@ export interface TaskDto {
   name: string;
   description: string | null;
   status: string; // pending, in_progress, completed
+  priority: 'low' | 'medium' | 'high' | null;
+  task_time: string | null;
   completed_at: Date | null;
   assigned_to_id: number | null;
   shared_goal_id: number | null;
@@ -26,6 +28,9 @@ export interface CreateTaskDto {
   name: string;
   description?: string | null;
   status?: string;
+  priority?: 'low' | 'medium' | 'high' | null;
+  task_time?: string | null;
+  created_at?: string | null;
   shared_goal_id?: number | null;
   assigned_to_id?: number | null;
 }
@@ -34,6 +39,9 @@ export interface UpdateTaskDto {
   name?: string;
   description?: string | null;
   status?: string;
+  priority?: 'low' | 'medium' | 'high' | null;
+  task_time?: string | null;
+  created_at?: string | null;
   assigned_to_id?: number | null;
 }
 

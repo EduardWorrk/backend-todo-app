@@ -38,6 +38,8 @@ router.use(authenticateToken);
  *                   user_id: 1
  *                   name: Купить молоко
  *                   description: Купить молоко в магазине
+ *                   priority: medium
+ *                   task_time: "09.30"
  *                   created_at: "2025-11-10T12:00:00.000Z"
  *                   updated_at: "2025-11-10T12:00:00.000Z"
  *       401:
@@ -73,6 +75,9 @@ router.get(
  *               value:
  *                 name: Купить молоко
  *                 description: Купить молоко в магазине
+ *                 priority: high
+ *                 task_time: "08.15"
+ *                 created_at: "2025-11-08T09:00:00.000Z"
  *     responses:
  *       201:
  *         description: Задача успешно создана
@@ -128,6 +133,9 @@ router.post(
  *               value:
  *                 name: Купить молоко и хлеб
  *                 description: Купить молоко и хлеб в магазине
+ *                 priority: medium
+ *                 task_time: "19.00"
+ *                 created_at: "2025-11-09T18:00:00.000Z"
  *     responses:
  *       200:
  *         description: Задача успешно обновлена

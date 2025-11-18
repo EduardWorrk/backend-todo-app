@@ -9,7 +9,7 @@ export const TODO_CONSTANTS = {
     INVALID_TASK_ID: 'Неверный ID задачи',
     TASK_NOT_FOUND: 'Задача не найдена',
     NO_PERMISSION: 'Вы можете изменять только свои задачи',
-    NO_FIELDS_TO_UPDATE: 'Необходимо указать хотя бы одно поле (name или description) для обновления',
+    NO_FIELDS_TO_UPDATE: 'Необходимо указать хотя бы одно поле (name, description, status, priority, task_time или assigned_to_id) для обновления',
     INTERNAL_ERROR: 'Внутренняя ошибка сервера',
   },
 

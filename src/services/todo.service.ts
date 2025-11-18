@@ -15,6 +15,8 @@ const taskSelect = {
   name: true,
   description: true,
   status: true,
+  priority: true,
+  task_time: true,
   completed_at: true,
   assigned_to_id: true,
   shared_goal_id: true,
@@ -87,7 +89,7 @@ export class TodoService {
       select: taskSelect,
     });
 
-    return tasks;
+    return tasks as TaskDto[];
   }
 
   /**
@@ -104,7 +106,13 @@ export class TodoService {
       name: data.name,
       description: data.description || null,
       status: data.status || 'pending',
+      priority: data.priority ?? null,
+      task_time: data.task_time ?? null,
     };
+
+    if (data.created_at) {
+      taskData.created_at = new Date(data.created_at);
+    }
 
     if (data.shared_goal_id) {
       taskData.shared_goal_id = data.shared_goal_id;
@@ -128,7 +136,7 @@ export class TodoService {
       select: taskSelect,
     });
 
-    return task;
+    return task as TaskDto;
   }
 
   /**
@@ -159,13 +167,7 @@ export class TodoService {
     await this.checkTaskAccess(taskId, userId);
 
     // Подготовка данных для обновления
-    const updateData: {
-      name?: string;
-      description?: string | null;
-      status?: string;
-      completed_at?: Date | null;
-      assigned_to_id?: number | null;
-    } = {};
+    const updateData: any = {};
     
     if (data.name !== undefined) {
       updateData.name = data.name;
@@ -177,6 +179,17 @@ export class TodoService {
 
     if (data.status !== undefined) {
       updateData.status = data.status;
+    if (data.priority !== undefined) {
+      updateData.priority = data.priority;
+    }
+
+    if (data.task_time !== undefined) {
+      updateData.task_time = data.task_time;
+    }
+
+    if (data.created_at) {
+      updateData.created_at = new Date(data.created_at);
+    }
       
       // Если статус изменен на completed, устанавливаем completed_at
       if (data.status === 'completed' && currentTask.status !== 'completed') {
@@ -235,7 +248,7 @@ export class TodoService {
       }
     }
 
-    return task;
+    return task as TaskDto;
   }
 
   /**
@@ -266,7 +279,7 @@ export class TodoService {
     // Проверка доступа
     await this.checkTaskAccess(taskId, userId);
 
-    return task;
+    return task as TaskDto;
   }
 
   /**
@@ -292,7 +305,7 @@ export class TodoService {
       task.shared_goal_id
     );
 
-    return task;
+    return task as TaskDto;
   }
 
   /**
@@ -308,7 +321,7 @@ export class TodoService {
       select: taskSelect,
     });
 
-    return task;
+    return task as TaskDto;
   }
 
   /**

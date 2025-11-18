@@ -25,6 +25,25 @@ export const createTaskSchema = z.object({
     })
     .optional(),
   
+  priority: z
+    .enum(['low', 'medium', 'high'], {
+      message: 'Приоритет должен быть одним из: low, medium, high',
+    })
+    .nullable()
+    .optional(),
+  
+  task_time: z
+    .string({ message: 'task_time должно быть строкой в формате HH.MM' })
+    .regex(/^([01]\d|2[0-3])\.[0-5]\d$/, 'task_time должно быть в формате HH.MM (00.00 - 23.59)')
+    .nullable()
+    .optional(),
+  
+  created_at: z
+    .string({ message: 'created_at должно быть в формате ISO 8601 (например, 2025-11-10T12:00:00.000Z)' })
+    .datetime({ message: 'created_at должно быть валидной датой ISO 8601' })
+    .nullable()
+    .optional(),
+  
   shared_goal_id: z
     .number({ message: 'ID совместной цели должен быть числом' })
     .int('ID совместной цели должен быть целым числом')
@@ -60,6 +79,25 @@ export const updateTaskSchema = z.object({
     })
     .optional(),
   
+  priority: z
+    .enum(['low', 'medium', 'high'], {
+      message: 'Приоритет должен быть одним из: low, medium, high',
+    })
+    .nullable()
+    .optional(),
+  
+  task_time: z
+    .string({ message: 'task_time должно быть строкой в формате HH.MM' })
+    .regex(/^([01]\d|2[0-3])\.[0-5]\d$/, 'task_time должно быть в формате HH.MM (00.00 - 23.59)')
+    .nullable()
+    .optional(),
+  
+  created_at: z
+    .string({ message: 'created_at должно быть в формате ISO 8601 (например, 2025-11-10T12:00:00.000Z)' })
+    .datetime({ message: 'created_at должно быть валидной датой ISO 8601' })
+    .nullable()
+    .optional(),
+  
   assigned_to_id: z
     .number({ message: 'ID исполнителя должен быть числом' })
     .int('ID исполнителя должен быть целым числом')
@@ -67,7 +105,14 @@ export const updateTaskSchema = z.object({
     .nullable()
     .optional(),
 }).refine(
-  (data) => data.name !== undefined || data.description !== undefined || data.status !== undefined || data.assigned_to_id !== undefined,
+  (data) =>
+    data.name !== undefined ||
+    data.description !== undefined ||
+    data.status !== undefined ||
+    data.priority !== undefined ||
+    data.task_time !== undefined ||
+    data.created_at !== undefined ||
+    data.assigned_to_id !== undefined,
   {
     message: TODO_CONSTANTS.ERRORS.NO_FIELDS_TO_UPDATE,
   }
