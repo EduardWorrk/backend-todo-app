@@ -11,6 +11,8 @@ import commentsRoutes from './routes/comments';
 import notificationsRoutes from './routes/notifications';
 import { errorHandler } from './middleware/error-handler';
 import { swaggerSpec } from './config/swagger';
+import { websocketService } from './services/websocket.service';
+import { Server as HTTPServer } from 'http';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -122,7 +124,8 @@ app.get('/api-docs/info', (req: Request, res: Response) => {
   });
 });
 
-app.listen(PORT, () => {
+// Создаем HTTP сервер для интеграции с socket.io
+const server: HTTPServer = app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
   const spec = swaggerSpec as any; // Type assertion для доступа к paths
   const pathsCount = Object.keys(spec.paths || {}).length;
@@ -131,4 +134,7 @@ app.listen(PORT, () => {
     console.error('[Swagger] WARNING: Swagger spec is empty! Check /api-docs/info for details');
   }
 });
+
+// Инициализация WebSocket сервиса
+websocketService.initialize(server);
 

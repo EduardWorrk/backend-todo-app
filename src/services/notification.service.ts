@@ -2,6 +2,7 @@ import prisma from '../db/prisma';
 import { NotFoundError, ForbiddenError } from '../utils/errors';
 import { NOTIFICATION_CONSTANTS } from '../constants/notification.constants';
 import { NotificationDto } from '../dto/notification.dto';
+import { websocketService } from './websocket.service';
 
 /**
  * Селекты для уведомлений
@@ -44,6 +45,9 @@ export class NotificationService {
       },
       select: notificationSelect,
     });
+
+    // Отправляем уведомление через WebSocket
+    websocketService.sendNotification(userId, notification);
 
     return notification;
   }
@@ -99,6 +103,9 @@ export class NotificationService {
       select: notificationSelect,
     });
 
+    // Отправляем событие о прочтении через WebSocket
+    websocketService.sendNotificationRead(userId, notificationId);
+
     return updatedNotification;
   }
 
@@ -115,6 +122,9 @@ export class NotificationService {
         is_read: true,
       },
     });
+
+    // Отправляем событие о прочтении всех уведомлений через WebSocket
+    websocketService.sendAllNotificationsRead(userId);
   }
 
   /**

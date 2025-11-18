@@ -7,6 +7,7 @@ import { validate } from '../utils/validation';
  * Схемы валидации для комментариев с использованием Zod
  */
 
+
 // Схема для создания комментария
 export const createCommentSchema = z.object({
   content: z
