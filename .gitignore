@@ -21,8 +21,7 @@ yarn-error.log*
 Thumbs.db
 
 # IDE
-.vscode/*
-!.vscode/settings.json
+.vscode/
 .idea/
 *.swp
 *.swo

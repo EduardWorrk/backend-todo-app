@@ -19,7 +19,7 @@ export class WebSocketService {
       cors: {
         origin: '*', // Разрешить все источники (для разработки)
         methods: ['GET', 'POST'],
-        credentials: true,``
+        credentials: true,
       },
     });
 
