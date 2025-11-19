@@ -27,6 +27,9 @@ app.use(cors({
 
 app.use(express.json());
 
+// Статические файлы (для WebSocket тестера)
+app.use(express.static('public'));
+
 // Swagger UI документация
 const swaggerUiOptions = {
   customCss: '.swagger-ui .topbar { display: none }',
@@ -68,7 +71,11 @@ app.get('/health', async (req: Request, res: Response) => {
 });
 
 app.get('/', (req: Request, res: Response) => {
-  res.json({ message: 'Hello from Express!' });
+  res.json({ 
+    message: 'Hello from Express!',
+    apiDocs: '/api-docs',
+    websocketTest: '/websocket-test.html'
+  });
 });
 
 // Роуты авторизации

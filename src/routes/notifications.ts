@@ -9,7 +9,25 @@ const router = Router();
  * @swagger
  * tags:
  *   name: Notifications
- *   description: Эндпоинты для управления уведомлениями (требуется аутентификация)
+ *   description: |
+ *     Эндпоинты для управления уведомлениями (требуется аутентификация)
+ *     
+ *     ## WebSocket уведомления
+ *     
+ *     Уведомления также отправляются через WebSocket в реальном времени.
+ *     Для тестирования WebSocket используйте: [WebSocket Tester](/websocket-test.html)
+ *     
+ *     ### Подключение:
+ *     ```javascript
+ *     const socket = io('http://localhost:3000', {
+ *       auth: { token: 'your-jwt-token' }
+ *     });
+ *     ```
+ *     
+ *     ### События:
+ *     - `notification:new` - новое уведомление
+ *     - `notification:read` - уведомление прочитано
+ *     - `notification:all_read` - все уведомления прочитаны
  */
 
 // Применяем middleware для всех роутов уведомлений

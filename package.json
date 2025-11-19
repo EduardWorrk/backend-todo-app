@@ -13,6 +13,8 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "prisma:deploy": "prisma migrate deploy",
+    "prisma:push": "prisma db push",
+    "apply-migrations": "node scripts/apply-migrations.js",
     "postinstall": "prisma generate",
     "test": "jest",
     "test:watch": "jest --watch",

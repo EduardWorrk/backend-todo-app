@@ -49,11 +49,22 @@ export const errorHandler = (
       });
     }
 
+    // Ошибка отсутствующего столбца (миграции не применены)
+    if (err.code === 'P2021' || err.code === 'P2022' || err.message?.includes('column') || err.message?.includes('does not exist')) {
+      return res.status(500).json({
+        status: 'error',
+        message: 'Database schema is out of sync. Please run migrations.',
+        error: process.env.NODE_ENV === 'development' ? err.message : undefined,
+        hint: process.env.NODE_ENV === 'development' ? 'Run: npx prisma db push or npm run prisma:migrate' : undefined,
+      });
+    }
+
     // Другие ошибки Prisma
     return res.status(500).json({
       status: 'error',
       message: 'Database error occurred',
       error: process.env.NODE_ENV === 'development' ? err.message : undefined,
+      code: process.env.NODE_ENV === 'development' ? err.code : undefined,
     });
   }
 

@@ -179,6 +179,15 @@ export class TodoService {
 
     if (data.status !== undefined) {
       updateData.status = data.status;
+      
+      // Если статус изменен на completed, устанавливаем completed_at
+      if (data.status === 'completed' && currentTask.status !== 'completed') {
+        updateData.completed_at = new Date();
+      } else if (data.status !== 'completed' && currentTask.status === 'completed') {
+        updateData.completed_at = null;
+      }
+    }
+
     if (data.priority !== undefined) {
       updateData.priority = data.priority;
     }
@@ -187,16 +196,8 @@ export class TodoService {
       updateData.task_time = data.task_time;
     }
 
-    if (data.created_at) {
-      updateData.created_at = new Date(data.created_at);
-    }
-      
-      // Если статус изменен на completed, устанавливаем completed_at
-      if (data.status === 'completed' && currentTask.status !== 'completed') {
-        updateData.completed_at = new Date();
-      } else if (data.status !== 'completed' && currentTask.status === 'completed') {
-        updateData.completed_at = null;
-      }
+    if (data.created_at !== undefined) {
+      updateData.created_at = data.created_at ? new Date(data.created_at) : null;
     }
 
     if (data.assigned_to_id !== undefined) {

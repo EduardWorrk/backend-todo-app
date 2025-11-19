@@ -7,11 +7,15 @@ import { Request, Response, NextFunction } from 'express';
 
 /**
  * Middleware для валидации тела запроса
+ * Нормализует данные и заменяет req.body валидированными значениями
  */
 export const validate = (schema: z.ZodSchema) => {
   return (req: Request, res: Response, next: NextFunction) => {
     try {
-      schema.parse(req.body);
+      // Парсим и валидируем данные, получаем нормализованный результат
+      const validatedData = schema.parse(req.body);
+      // Заменяем req.body на валидированные данные
+      req.body = validatedData;
       next();
     } catch (error) {
       if (error instanceof z.ZodError) {

@@ -33,9 +33,10 @@ export const createTaskSchema = z.object({
     .optional(),
   
   task_time: z
-    .string({ message: 'task_time должно быть строкой в формате HH.MM' })
-    .regex(/^([01]\d|2[0-3])\.[0-5]\d$/, 'task_time должно быть в формате HH.MM (00.00 - 23.59)')
-    .nullable()
+    .union([
+      z.string().regex(/^([01]\d|2[0-3])\.[0-5]\d$/, 'task_time должно быть в формате HH.MM (00.00 - 23.59)'),
+      z.null()
+    ])
     .optional(),
   
   created_at: z
@@ -87,9 +88,10 @@ export const updateTaskSchema = z.object({
     .optional(),
   
   task_time: z
-    .string({ message: 'task_time должно быть строкой в формате HH.MM' })
-    .regex(/^([01]\d|2[0-3])\.[0-5]\d$/, 'task_time должно быть в формате HH.MM (00.00 - 23.59)')
-    .nullable()
+    .union([
+      z.string().regex(/^([01]\d|2[0-3])\.[0-5]\d$/, 'task_time должно быть в формате HH.MM (00.00 - 23.59)'),
+      z.null()
+    ])
     .optional(),
   
   created_at: z

@@ -36,7 +36,29 @@ const options: swaggerJsdoc.Options = {
     info: {
       title: 'Todo API',
       version: '1.0.0',
-      description: 'API для управления задачами (Todo) с аутентификацией',
+      description: `API для управления задачами (Todo) с аутентификацией и WebSocket уведомлениями в реальном времени.
+
+## WebSocket уведомления
+
+Для тестирования WebSocket используйте специальную страницу: [WebSocket Tester](/websocket-test.html)
+
+### Подключение к WebSocket:
+
+\`\`\`javascript
+import { io } from 'socket.io-client';
+
+const socket = io('http://localhost:3000', {
+  auth: {
+    token: 'your-jwt-token-here'
+  }
+});
+\`\`\`
+
+### События:
+- \`connected\` - подтверждение подключения
+- \`notification:new\` - новое уведомление
+- \`notification:read\` - уведомление прочитано
+- \`notification:all_read\` - все уведомления прочитаны`,
       contact: {
         name: 'API Support',
       },
@@ -580,7 +602,7 @@ const options: swaggerJsdoc.Options = {
       },
       {
         name: 'Notifications',
-        description: 'Эндпоинты для управления уведомлениями',
+        description: 'Эндпоинты для управления уведомлениями и WebSocket подключения',
       },
     ],
   },
