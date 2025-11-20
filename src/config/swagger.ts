@@ -235,6 +235,12 @@ const socket = io('http://localhost:3000', {
               example: 1,
               description: 'ID совместной цели',
             },
+            category_id: {
+              type: 'integer',
+              nullable: true,
+              example: 2,
+              description: 'ID категории задачи',
+            },
             assigned_to: {
               type: 'object',
               nullable: true,
@@ -243,6 +249,10 @@ const socket = io('http://localhost:3000', {
                 login: { type: 'string' },
                 email: { type: 'string' },
               },
+            },
+            category: {
+              $ref: '#/components/schemas/Category',
+              nullable: true,
             },
             created_at: {
               type: 'string',
@@ -298,6 +308,11 @@ const socket = io('http://localhost:3000', {
               nullable: true,
               example: 2,
             },
+            category_id: {
+              type: 'integer',
+              nullable: true,
+              example: 1,
+            },
             created_at: {
               type: 'string',
               format: 'date-time',
@@ -343,6 +358,11 @@ const socket = io('http://localhost:3000', {
               nullable: true,
               example: 2,
             },
+            category_id: {
+              type: 'integer',
+              nullable: true,
+              example: 1,
+            },
             created_at: {
               type: 'string',
               format: 'date-time',
@@ -350,6 +370,60 @@ const socket = io('http://localhost:3000', {
               example: '2025-11-09T09:00:00.000Z',
               description: 'Опционально изменить дату создания',
             },
+          },
+        },
+        Category: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer', example: 1 },
+            name: { type: 'string', example: 'Работа' },
+            color: { type: 'string', nullable: true, example: '#FF0000' },
+            created_by: { type: 'integer', nullable: true, example: 1 },
+            created_at: { type: 'string', format: 'date-time' },
+            updated_at: { type: 'string', format: 'date-time' },
+          },
+        },
+        CreateCategoryRequest: {
+          type: 'object',
+          required: ['name'],
+          properties: {
+            name: {
+              type: 'string',
+              maxLength: 120,
+              example: 'Учеба',
+              description: 'Название категории',
+            },
+            color: {
+              type: 'string',
+              nullable: true,
+              example: '#123456',
+              description: 'HEX код цвета (#RRGGBB или #RGB)',
+            },
+          },
+        },
+        CategoriesResponse: {
+          type: 'object',
+          properties: {
+            status: { type: 'string', example: 'success' },
+            categories: {
+              type: 'array',
+              items: { $ref: '#/components/schemas/Category' },
+            },
+          },
+        },
+        CategoryResponse: {
+          type: 'object',
+          properties: {
+            status: { type: 'string', example: 'success' },
+            message: { type: 'string', example: 'Категория успешно создана' },
+            category: { $ref: '#/components/schemas/Category' },
+          },
+        },
+        DeleteCategoryResponse: {
+          type: 'object',
+          properties: {
+            status: { type: 'string', example: 'success' },
+            message: { type: 'string', example: 'Категория успешно удалена' },
           },
         },
         // Goal Schemas
@@ -599,6 +673,10 @@ const socket = io('http://localhost:3000', {
       {
         name: 'Comments',
         description: 'Эндпоинты для управления комментариями к задачам',
+      },
+      {
+        name: 'Categories',
+        description: 'Эндпоинты для управления категориями задач',
       },
       {
         name: 'Notifications',

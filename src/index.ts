@@ -9,6 +9,7 @@ import usersRoutes from './routes/users';
 import goalsRoutes from './routes/goals';
 import commentsRoutes from './routes/comments';
 import notificationsRoutes from './routes/notifications';
+import categoriesRoutes from './routes/categories';
 import { errorHandler } from './middleware/error-handler';
 import { swaggerSpec } from './config/swagger';
 import { websocketService } from './services/websocket.service';
@@ -95,6 +96,9 @@ app.use('/', commentsRoutes);
 
 // Роуты уведомлений
 app.use('/notifications', notificationsRoutes);
+
+// Роуты категорий
+app.use('/categories', categoriesRoutes);
 
 // Централизованный обработчик ошибок (должен быть последним)
 app.use(errorHandler);

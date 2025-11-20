@@ -20,6 +20,9 @@ model User {
   // Мои задачи
   tasks     Task[]
   
+  // Созданные категории
+  categories Category[] @relation("CategoryCreator")
+  
   // Совместные цели, где я владелец
   owned_goals SharedGoal[] @relation("GoalOwner")
   
@@ -48,6 +51,7 @@ model Task {
   status      String   @default("pending") // pending, in_progress, completed
   priority    String?  @db.VarChar(16)
   task_time   String?  @db.VarChar(8)
+  category_id Int?
   created_at  DateTime @default(now()) @db.Timestamp(6)
   updated_at  DateTime @default(now()) @updatedAt @db.Timestamp(6)
   completed_at DateTime?
@@ -63,6 +67,9 @@ model Task {
   // Владелец
   user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
   
+  // Категория
+  category Category? @relation(fields: [category_id], references: [id], onDelete: SetNull)
+  
   // Комментарии
   comments Comment[]
 
@@ -70,8 +77,23 @@ model Task {
   @@index([status])
   @@index([shared_goal_id])
   @@index([assigned_to_id])
+  @@index([category_id])
   @@index([completed_at])
   @@map("tasks")
+}
+
+model Category {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique @db.VarChar(120)
+  color       String?  @db.VarChar(32)
+  created_by  Int?
+  created_at  DateTime @default(now()) @db.Timestamp(6)
+  updated_at  DateTime @default(now()) @updatedAt @db.Timestamp(6)
+
+  creator User? @relation("CategoryCreator", fields: [created_by], references: [id], onDelete: SetNull)
+  tasks   Task[]
+
+  @@map("categories")
 }
 
 model SharedGoal {

@@ -58,6 +58,13 @@ export const createTaskSchema = z.object({
     .positive('ID исполнителя должен быть положительным числом')
     .nullable()
     .optional(),
+
+  category_id: z
+    .number({ message: 'ID категории должен быть числом' })
+    .int('ID категории должен быть целым числом')
+    .positive('ID категории должен быть положительным числом')
+    .nullable()
+    .optional(),
 });
 
 // Схема для обновления задачи
@@ -106,6 +113,13 @@ export const updateTaskSchema = z.object({
     .positive('ID исполнителя должен быть положительным числом')
     .nullable()
     .optional(),
+
+  category_id: z
+    .number({ message: 'ID категории должен быть числом' })
+    .int('ID категории должен быть целым числом')
+    .positive('ID категории должен быть положительным числом')
+    .nullable()
+    .optional(),
 }).refine(
   (data) =>
     data.name !== undefined ||
@@ -114,7 +128,8 @@ export const updateTaskSchema = z.object({
     data.priority !== undefined ||
     data.task_time !== undefined ||
     data.created_at !== undefined ||
-    data.assigned_to_id !== undefined,
+    data.assigned_to_id !== undefined ||
+    data.category_id !== undefined,
   {
     message: TODO_CONSTANTS.ERRORS.NO_FIELDS_TO_UPDATE,
   }

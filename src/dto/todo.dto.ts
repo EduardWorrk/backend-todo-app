@@ -8,6 +8,8 @@ export interface UserBasicDto {
   email: string;
 }
 
+import { CategoryDto } from './category.dto';
+
 export interface TaskDto {
   id: number;
   user_id: number;
@@ -19,7 +21,9 @@ export interface TaskDto {
   completed_at: Date | null;
   assigned_to_id: number | null;
   shared_goal_id: number | null;
+  category_id: number | null;
   assigned_to: UserBasicDto | null;
+  category: CategoryDto | null;
   created_at: Date;
   updated_at: Date;
 }
@@ -33,6 +37,7 @@ export interface CreateTaskDto {
   created_at?: string | null;
   shared_goal_id?: number | null;
   assigned_to_id?: number | null;
+  category_id?: number | null;
 }
 
 export interface UpdateTaskDto {
@@ -43,6 +48,7 @@ export interface UpdateTaskDto {
   task_time?: string | null;
   created_at?: string | null;
   assigned_to_id?: number | null;
+  category_id?: number | null;
 }
 
 export interface TasksResponseDto {

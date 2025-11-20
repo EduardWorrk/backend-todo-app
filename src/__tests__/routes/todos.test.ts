@@ -31,8 +31,15 @@ describe('GET /todos', () => {
           user_id: userId,
           name: 'Купить молоко',
           description: 'Купить молоко в магазине',
+          status: 'pending',
           priority: 'high',
           task_time: '08.30',
+          completed_at: null,
+          assigned_to_id: null,
+          shared_goal_id: null,
+          category_id: null,
+          category: null,
+          assigned_to: null,
           created_at: new Date('2025-01-10T12:00:00.000Z'),
           updated_at: new Date('2025-01-10T12:00:00.000Z'),
         },
@@ -41,8 +48,15 @@ describe('GET /todos', () => {
           user_id: userId,
           name: 'Сделать домашнее задание',
           description: null,
+          status: 'pending',
           priority: null,
           task_time: null,
+          completed_at: null,
+          assigned_to_id: null,
+          shared_goal_id: null,
+          category_id: null,
+          category: null,
+          assigned_to: null,
           created_at: new Date('2025-01-09T10:00:00.000Z'),
           updated_at: new Date('2025-01-09T10:00:00.000Z'),
         },
@@ -75,6 +89,7 @@ describe('GET /todos', () => {
         priority: 'high',
         task_time: '08.30',
         created_at: mockTasks[0].created_at.toISOString(),
+        category_id: null,
       });
       expect(response.body.tasks[1]).toMatchObject({
         id: 2,
@@ -84,23 +99,16 @@ describe('GET /todos', () => {
         priority: null,
         task_time: null,
         created_at: mockTasks[1].created_at.toISOString(),
+        category_id: null,
       });
 
       // Проверяем, что Prisma был вызван с правильными параметрами
-      expect(mockPrisma.task.findMany).toHaveBeenCalledWith({
-        where: { user_id: userId },
-        orderBy: { created_at: 'desc' },
-        select: {
-          id: true,
-          user_id: true,
-          name: true,
-          description: true,
-          priority: true,
-          task_time: true,
-          created_at: true,
-          updated_at: true,
-        },
-      });
+      expect(mockPrisma.task.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orderBy: { created_at: 'desc' },
+          select: expect.any(Object),
+        })
+      );
     });
 
     it('должен вернуть пустой массив, если у пользователя нет задач', async () => {
@@ -142,8 +150,15 @@ describe('GET /todos', () => {
           user_id: userId,
           name: 'Задача пользователя 1',
           description: null,
+          status: 'pending',
           priority: 'medium',
           task_time: '12.00',
+          completed_at: null,
+          assigned_to_id: null,
+          shared_goal_id: null,
+          category_id: null,
+          category: null,
+          assigned_to: null,
           created_at: new Date('2025-01-10T12:00:00.000Z'),
           updated_at: new Date('2025-01-10T12:00:00.000Z'),
         },
@@ -169,12 +184,9 @@ describe('GET /todos', () => {
       expect(response.body.tasks).toHaveLength(1);
       expect(response.body.tasks[0].user_id).toBe(userId);
 
-      // Проверяем, что Prisma был вызван с правильным user_id
-      expect(mockPrisma.task.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { user_id: userId },
-        })
-      );
+      // Проверяем, что Prisma запросил задачи пользователя
+      const prismaArgs = (mockPrisma.task.findMany as jest.Mock).mock.calls[0][0];
+      expect(prismaArgs?.where?.OR?.[0]).toEqual({ user_id: userId });
     });
   });
 

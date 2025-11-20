@@ -40,6 +40,11 @@ router.use(authenticateToken);
  *                   description: Купить молоко в магазине
  *                   priority: medium
  *                   task_time: "09.30"
+ *                   category_id: 1
+ *                   category:
+ *                     id: 1
+ *                     name: Работа
+ *                     color: "#FF0000"
  *                   created_at: "2025-11-10T12:00:00.000Z"
  *                   updated_at: "2025-11-10T12:00:00.000Z"
  *       401:
@@ -77,6 +82,7 @@ router.get(
  *                 description: Купить молоко в магазине
  *                 priority: high
  *                 task_time: "08.15"
+ *                 category_id: 1
  *                 created_at: "2025-11-08T09:00:00.000Z"
  *     responses:
  *       201:
@@ -135,6 +141,7 @@ router.post(
  *                 description: Купить молоко и хлеб в магазине
  *                 priority: medium
  *                 task_time: "19.00"
+ *                 category_id: 2
  *                 created_at: "2025-11-09T18:00:00.000Z"
  *     responses:
  *       200:

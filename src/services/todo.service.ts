@@ -5,10 +5,13 @@ import { CreateTaskInput, UpdateTaskInput } from '../validators/todo.validator';
 import { TaskDto } from '../dto/todo.dto';
 import { notificationService } from './notification.service';
 import { NOTIFICATION_CONSTANTS } from '../constants/notification.constants';
+import { CATEGORY_CONSTANTS } from '../constants/category.constants';
 
 /**
  * Селекты для задач
  */
+const prismaCategory = (prisma as any).category;
+
 const taskSelect = {
   id: true,
   user_id: true,
@@ -20,6 +23,7 @@ const taskSelect = {
   completed_at: true,
   assigned_to_id: true,
   shared_goal_id: true,
+  category_id: true,
   created_at: true,
   updated_at: true,
   assigned_to: {
@@ -27,6 +31,16 @@ const taskSelect = {
       id: true,
       login: true,
       email: true,
+    },
+  },
+  category: {
+    select: {
+      id: true,
+      name: true,
+      color: true,
+      created_by: true,
+      created_at: true,
+      updated_at: true,
     },
   },
 } as const;
@@ -101,6 +115,8 @@ export class TodoService {
       await this.checkGoalAccess(data.shared_goal_id, userId);
     }
 
+    await this.ensureCategoryExists(data.category_id ?? null);
+
     const taskData: any = {
       user_id: userId,
       name: data.name,
@@ -108,6 +124,7 @@ export class TodoService {
       status: data.status || 'pending',
       priority: data.priority ?? null,
       task_time: data.task_time ?? null,
+      category_id: data.category_id ?? null,
     };
 
     if (data.created_at) {
@@ -198,6 +215,11 @@ export class TodoService {
 
     if (data.created_at !== undefined) {
       updateData.created_at = data.created_at ? new Date(data.created_at) : null;
+    }
+
+    if (data.category_id !== undefined) {
+      await this.ensureCategoryExists(data.category_id ?? null);
+      updateData.category_id = data.category_id ?? null;
     }
 
     if (data.assigned_to_id !== undefined) {
@@ -323,6 +345,24 @@ export class TodoService {
     });
 
     return task as TaskDto;
+  }
+
+  /**
+   * Проверка существования категории
+   */
+  private async ensureCategoryExists(categoryId: number | null): Promise<void> {
+    if (categoryId === null || categoryId === undefined) {
+      return;
+    }
+
+    const category = await prismaCategory.findUnique({
+      where: { id: categoryId },
+      select: { id: true },
+    });
+
+    if (!category) {
+      throw new NotFoundError(CATEGORY_CONSTANTS.ERRORS.NOT_FOUND);
+    }
   }
 
   /**
