@@ -145,11 +145,45 @@ const socket = io('http://localhost:3000', {
               type: 'string',
               example: 'john@example.com',
             },
+            telegram_id: {
+              type: 'integer',
+              nullable: true,
+              example: 123456789,
+              description: 'Telegram ID пользователя (если авторизован через Telegram)',
+            },
             created_at: {
               type: 'string',
               format: 'date-time',
               example: '2025-11-10T12:00:00.000Z',
               description: 'Дата создания задачи (можно задать вручную при создании/обновлении)',
+            },
+          },
+        },
+        RequestTelegramCodeRequest: {
+          type: 'object',
+          required: ['telegram_id'],
+          properties: {
+            telegram_id: {
+              type: 'integer',
+              example: 123456789,
+              description: 'Telegram ID пользователя',
+            },
+          },
+        },
+        TelegramLoginRequest: {
+          type: 'object',
+          required: ['code'],
+          properties: {
+            telegram_id: {
+              type: 'integer',
+              example: 123456789,
+              description: 'Telegram ID пользователя (опционально — вводить не обязательно)',
+            },
+            code: {
+              type: 'string',
+              pattern: '^\\d{6}$',
+              example: '123456',
+              description: '6-значный код авторизации, полученный в Telegram',
             },
           },
         },

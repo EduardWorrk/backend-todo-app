@@ -44,6 +44,8 @@ docker-compose up -d db
 npm run prisma:migrate
 ```
 
+> При обновлении до версии с категориями обязательно выполните миграции, чтобы добавить таблицу `categories` и поле `category_id` в `tasks`.
+
 Или если база данных уже содержит таблицы:
 
 ```bash
@@ -85,9 +87,10 @@ npm start
 
 ## Структура базы данных
 
-Проект использует Prisma ORM с двумя моделями:
-- **User** - пользователи (id, login, email, password, created_at)
-- **Task** - задачи (id, user_id, name, description, created_at, updated_at)
+Проект использует Prisma ORM с моделями:
+- **User** — пользователи (id, login, email, password, created_at)
+- **Task** — задачи (id, user_id, name, description, category_id, created_at, updated_at)
+- **Category** — глобальные категории задач (id, name, color, created_by, created_at)
 
 ## Устранение проблем
 

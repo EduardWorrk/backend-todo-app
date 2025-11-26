@@ -21,6 +21,7 @@ export interface AuthResponseDto {
     id: number;
     login: string;
     email: string;
+    telegram_id?: number | null;
     created_at: Date;
   };
   error?: string;
@@ -30,6 +31,16 @@ export interface UserDto {
   id: number;
   login: string;
   email: string;
+  telegram_id?: number | null;
   created_at: Date;
+}
+
+export interface RequestTelegramCodeDto {
+  telegram_id: number;
+}
+
+export interface TelegramLoginDto {
+  telegram_id?: number;
+  code: string;
 }
 

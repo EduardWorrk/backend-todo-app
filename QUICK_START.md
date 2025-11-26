@@ -25,6 +25,7 @@ npm run dev
 - Проверьте health endpoint: http://localhost:3000/health
 - Зарегистрируйте пользователя: `POST http://localhost:3000/register`
 - Войдите: `POST http://localhost:3000/login`
+- Создайте категории: `POST http://localhost:3000/categories` (JWT обязателен), затем привязывайте их к задачам через `category_id`
 
 Подробная инструкция в [SETUP.md](./SETUP.md)
 

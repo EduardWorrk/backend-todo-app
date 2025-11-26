@@ -1,11 +1,20 @@
-import prisma from '../db/prisma';
 import bcrypt from 'bcrypt';
-import { generateToken } from '../utils/jwt';
 import { AUTH_CONSTANTS } from '../constants/auth.constants';
-import { ConflictError, AuthenticationError } from '../utils/errors';
-import { RegisterInput, LoginInput } from '../validators/auth.validator';
-import { UserDto } from '../dto/auth.dto';
+import prisma from '../db/prisma';
+import { TelegramLoginDto, UserDto } from '../dto/auth.dto';
+import { AuthenticationError, ConflictError } from '../utils/errors';
+import { generateToken } from '../utils/jwt';
 import { SecurityLogger } from '../utils/security-logger';
+import { LoginInput, RegisterInput } from '../validators/auth.validator';
+import { telegramService } from './telegram.service';
+
+type TelegramUserRecord = {
+  id: number;
+  login: string;
+  email: string;
+  telegram_id: bigint | null;
+  created_at: Date;
+};
 
 /**
  * Сервис для бизнес-логики аутентификации
@@ -43,6 +52,10 @@ export class AuthService {
         created_at: true,
       },
     });
+
+    if (!user) {
+      throw new AuthenticationError(AUTH_CONSTANTS.ERRORS.INVALID_TELEGRAM_CODE);
+    }
 
     // Генерация JWT токена
     const token = generateToken({
@@ -131,6 +144,112 @@ export class AuthService {
     );
 
     return { user: userWithoutPassword, token };
+  }
+
+  /**
+   * Авторизация через Telegram
+   */
+  async loginWithTelegram(
+    data: TelegramLoginDto,
+    metadata?: { ip?: string; userAgent?: string }
+  ): Promise<{ user: UserDto; token: string }> {
+    const { telegram_id: providedTelegramId, code } = data;
+
+    const resolvedTelegramId = await telegramService.consumeAuthCode(
+      code,
+      providedTelegramId
+    );
+
+    if (!resolvedTelegramId) {
+      SecurityLogger.logAuthFailure(
+        providedTelegramId ? `telegram_${providedTelegramId}` : 'telegram_unknown',
+        'INVALID_TELEGRAM_CODE',
+        metadata?.ip,
+        metadata?.userAgent
+      );
+      throw new AuthenticationError(AUTH_CONSTANTS.ERRORS.INVALID_TELEGRAM_CODE);
+    }
+
+    // Поиск пользователя по telegram_id
+    const prismaClient = prisma as any;
+    let user: TelegramUserRecord | null = await prismaClient.user.findUnique({
+      where: { telegram_id: BigInt(resolvedTelegramId) },
+      select: {
+        id: true,
+        login: true,
+        email: true,
+        telegram_id: true,
+        created_at: true,
+      },
+    });
+
+    // Если пользователь не найден, создаем нового
+    if (!user) {
+      const login = `telegram_${resolvedTelegramId}`;
+      const email = `telegram_${resolvedTelegramId}@telegram.local`;
+      const tempPassword = await bcrypt.hash(
+        `temp_${resolvedTelegramId}_${Date.now()}`,
+        AUTH_CONSTANTS.BCRYPT_SALT_ROUNDS
+      );
+
+      await this.checkUserExists(login, email);
+
+      user = await prismaClient.user.create({
+        data: {
+          login,
+          email,
+          password: tempPassword,
+          telegram_id: BigInt(resolvedTelegramId),
+        },
+        select: {
+          id: true,
+          login: true,
+          email: true,
+          telegram_id: true,
+          created_at: true,
+        },
+      });
+
+      if (!user) {
+        throw new AuthenticationError(AUTH_CONSTANTS.ERRORS.INTERNAL_ERROR);
+      }
+
+      SecurityLogger.logRegistration(
+        user.id,
+        user.email,
+        user.login,
+        metadata?.ip,
+        metadata?.userAgent
+      );
+    }
+
+    if (!user) {
+      throw new AuthenticationError(AUTH_CONSTANTS.ERRORS.INTERNAL_ERROR);
+    }
+
+    // Генерация JWT токена
+    const token = generateToken({
+      id: user.id,
+      login: user.login,
+      email: user.email,
+    });
+
+    const userResponse: UserDto = {
+      id: user.id,
+      login: user.login,
+      email: user.email,
+      telegram_id: Number(resolvedTelegramId),
+      created_at: user.created_at,
+    };
+
+    SecurityLogger.logAuthSuccess(
+      user.id,
+      user.email,
+      metadata?.ip,
+      metadata?.userAgent
+    );
+
+    return { user: userResponse, token };
   }
 
   /**

@@ -43,6 +43,11 @@ SERVER_URL=http://your-server-ip:3001
 
 # JWT Secret (ОБЯЗАТЕЛЬНО измените в продакшене!)
 JWT_SECRET=your-very-secure-secret-key-change-this
+
+# Telegram Bot Configuration (опционально)
+TELEGRAM_BOT_TOKEN=your_telegram_bot_token_here
+TELEGRAM_AUTH_CODE_EXPIRY_MINUTES=5
+
 NODE_ENV=production
 ```
 

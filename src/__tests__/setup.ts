@@ -23,6 +23,12 @@ const mockPrismaClient = {
     create: jest.fn(),
     delete: jest.fn(),
   },
+  telegramAuthCode: {
+    create: jest.fn(),
+    findFirst: jest.fn(),
+    update: jest.fn(),
+    deleteMany: jest.fn(),
+  },
   $connect: jest.fn(),
   $disconnect: jest.fn(),
 };
@@ -44,5 +50,15 @@ jest.mock('../utils/security-logger', () => ({
   },
   getClientIp: jest.fn(),
   getUserAgent: jest.fn(),
+}));
+
+// Мокируем Telegram сервис
+jest.mock('../services/telegram.service', () => ({
+  telegramService: {
+    isBotConfigured: jest.fn(),
+    generateAuthCode: jest.fn(),
+    consumeAuthCode: jest.fn(),
+    sendCodeToUser: jest.fn(),
+  },
 }));
 

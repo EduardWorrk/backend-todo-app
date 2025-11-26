@@ -60,11 +60,16 @@ export class SecurityLogger {
    */
   static logAuthFailure(
     email: string,
-    reason: 'USER_NOT_FOUND' | 'INVALID_PASSWORD',
+    reason: 'USER_NOT_FOUND' | 'INVALID_PASSWORD' | 'INVALID_TELEGRAM_CODE',
     ip?: string,
     userAgent?: string
   ): void {
-    const reasonText = reason === 'USER_NOT_FOUND' ? 'Пользователь не найден' : 'Неверный пароль';
+    const reasonTextMap: Record<'USER_NOT_FOUND' | 'INVALID_PASSWORD' | 'INVALID_TELEGRAM_CODE', string> = {
+      USER_NOT_FOUND: 'Пользователь не найден',
+      INVALID_PASSWORD: 'Неверный пароль',
+      INVALID_TELEGRAM_CODE: 'Неверный Telegram-код',
+    };
+    const reasonText = reasonTextMap[reason];
     
     this.log({
       type: 'AUTH_FAILURE',

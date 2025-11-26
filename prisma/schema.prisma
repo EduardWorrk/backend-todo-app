@@ -15,6 +15,7 @@ model User {
   login     String   @unique @db.VarChar(255)
   email     String   @unique @db.VarChar(255)
   password  String   @db.VarChar(255)
+  telegram_id BigInt? @unique
   created_at DateTime @default(now()) @db.Timestamp(6)
   
   // Мои задачи
@@ -40,6 +41,7 @@ model User {
 
   @@index([login])
   @@index([email])
+  @@index([telegram_id])
   @@map("users")
 }
 
@@ -165,4 +167,18 @@ model Notification {
   @@index([user_id])
   @@index([is_read])
   @@map("notifications")
+}
+
+model TelegramAuthCode {
+  id          Int      @id @default(autoincrement())
+  telegram_id BigInt
+  code        String   @db.VarChar(6)
+  expires_at  DateTime @db.Timestamp(6)
+  used        Boolean  @default(false)
+  created_at  DateTime @default(now()) @db.Timestamp(6)
+  
+  @@index([telegram_id])
+  @@index([code])
+  @@index([expires_at])
+  @@map("telegram_auth_codes")
 }

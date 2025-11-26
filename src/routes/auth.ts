@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { authController } from '../controllers/auth.controller';
 import { userController } from '../controllers/user.controller';
 import { validate, registerSchema, loginSchema } from '../validators/auth.validator';
+import { validate as validateTelegram, requestTelegramCodeSchema, telegramLoginSchema } from '../validators/telegram.validator';
 import { asyncHandler } from '../middleware/error-handler';
 import authenticateToken from '../middleware/auth';
 
@@ -184,6 +185,128 @@ router.post(
   authenticateToken,
   asyncHandler(async (req, res) => {
     await userController.logout(req, res);
+  })
+);
+
+/**
+ * @swagger
+ * /auth/telegram/request-code:
+ *   post:
+ *     summary: Запросить код авторизации через Telegram
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - telegram_id
+ *             properties:
+ *               telegram_id:
+ *                 type: integer
+ *                 description: Telegram ID пользователя
+ *                 example: 123456789
+ *           examples:
+ *             example1:
+ *               value:
+ *                 telegram_id: 123456789
+ *     responses:
+ *       200:
+ *         description: Код авторизации успешно отправлен в Telegram
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 message:
+ *                   type: string
+ *                   example: Код авторизации отправлен в Telegram
+ *       400:
+ *         description: Ошибка валидации
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Ошибка отправки кода или бот не настроен
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+router.post(
+  '/auth/telegram/request-code',
+  validateTelegram(requestTelegramCodeSchema),
+  asyncHandler(async (req, res) => {
+    await authController.requestTelegramCode(req, res);
+  })
+);
+
+/**
+ * @swagger
+ * /auth/telegram/login:
+ *   post:
+ *     summary: Авторизация через Telegram с кодом
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - code
+ *             properties:
+ *               telegram_id:
+ *                 type: integer
+ *                 description: Telegram ID пользователя (опционально — для ручного запроса кода)
+ *                 example: 123456789
+ *               code:
+ *                 type: string
+ *                 description: 6-значный код авторизации
+ *                 example: "123456"
+ *           examples:
+ *             example1:
+ *               value:
+ *                 code: "123456"
+ *     responses:
+ *       200:
+ *         description: Успешная авторизация через Telegram
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AuthResponse'
+ *             example:
+ *               status: success
+ *               message: Успешный вход через Telegram
+ *               token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *               user:
+ *                 id: 1
+ *                 login: telegram_123456789
+ *                 email: telegram_123456789@telegram.local
+ *                 created_at: "2025-11-10T12:00:00.000Z"
+ *       400:
+ *         description: Ошибка валидации
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       401:
+ *         description: Неверный или истекший код авторизации
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+router.post(
+  '/auth/telegram/login',
+  validateTelegram(telegramLoginSchema),
+  asyncHandler(async (req, res) => {
+    await authController.loginWithTelegram(req, res);
   })
 );
 
