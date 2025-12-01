@@ -1,6 +1,6 @@
-import swaggerJsdoc from 'swagger-jsdoc';
-import path from 'path';
 import { existsSync, readdirSync } from 'fs';
+import path from 'path';
+import swaggerJsdoc from 'swagger-jsdoc';
 
 const baseDir = process.cwd();
 
@@ -65,12 +65,12 @@ const socket = io('http://localhost:3000', {
     },
     servers: [
       {
-        url: process.env.SERVER_URL || `http://localhost:${process.env.PORT || 3000}`,
+        url: process.env.SERVER_URL || `http://localhost:${process.env.HOST_PORT || process.env.PORT || 3000}`,
         description: process.env.SERVER_URL ? 'Production server' : 'Development server',
       },
       // Добавляем localhost для разработки, если указан SERVER_URL
       ...(process.env.SERVER_URL ? [{
-        url: `http://localhost:${process.env.PORT || 3000}`,
+        url: `http://localhost:${process.env.HOST_PORT || process.env.PORT || 3000}`,
         description: 'Development server (localhost)',
       }] : []),
     ],
@@ -205,6 +205,119 @@ const socket = io('http://localhost:3000', {
             },
             user: {
               $ref: '#/components/schemas/User',
+            },
+          },
+        },
+        GigaChatMessage: {
+          type: 'object',
+          properties: {
+            role: {
+              type: 'string',
+              enum: ['system', 'user', 'assistant'],
+              example: 'user',
+            },
+            content: {
+              type: 'string',
+              example: 'что ты умеешь?',
+            },
+          },
+        },
+        SendGigaChatMessageRequest: {
+          type: 'object',
+          properties: {
+            message: {
+              type: 'string',
+              example: 'что ты умеешь?',
+              description: 'Простое сообщение пользователя. Если указано, массив messages можно не передавать.',
+            },
+            messages: {
+              type: 'array',
+              description: 'Полная история общения в формате OpenAI/GigaChat',
+              items: {
+                $ref: '#/components/schemas/GigaChatMessage',
+              },
+            },
+            temperature: {
+              type: 'number',
+              minimum: 0,
+              maximum: 2,
+              example: 0.3,
+            },
+            top_p: {
+              type: 'number',
+              minimum: 0,
+              maximum: 1,
+              example: 0.9,
+            },
+          },
+          required: [],
+        },
+        GigaChatChoice: {
+          type: 'object',
+          properties: {
+            index: {
+              type: 'integer',
+              example: 0,
+            },
+            message: {
+              $ref: '#/components/schemas/GigaChatMessage',
+            },
+            finish_reason: {
+              type: 'string',
+              nullable: true,
+              example: 'stop',
+            },
+          },
+        },
+        GigaChatUsage: {
+          type: 'object',
+          properties: {
+            prompt_tokens: {
+              type: 'integer',
+              example: 25,
+            },
+            completion_tokens: {
+              type: 'integer',
+              example: 140,
+            },
+            total_tokens: {
+              type: 'integer',
+              example: 165,
+            },
+          },
+        },
+        GigaChatResponse: {
+          type: 'object',
+          properties: {
+            status: {
+              type: 'string',
+              example: 'success',
+            },
+            message: {
+              type: 'string',
+              example: 'Ответ получен от GigaChat',
+            },
+            data: {
+              type: 'object',
+              properties: {
+                reply: {
+                  type: 'string',
+                  example: 'Я виртуальный ассистент GigaChat...',
+                },
+                model: {
+                  type: 'string',
+                  example: 'GigaChat-2-Max',
+                },
+                choices: {
+                  type: 'array',
+                  items: {
+                    $ref: '#/components/schemas/GigaChatChoice',
+                  },
+                },
+                usage: {
+                  $ref: '#/components/schemas/GigaChatUsage',
+                },
+              },
             },
           },
         },
@@ -715,6 +828,10 @@ const socket = io('http://localhost:3000', {
       {
         name: 'Notifications',
         description: 'Эндпоинты для управления уведомлениями и WebSocket подключения',
+      },
+      {
+        name: 'AI',
+        description: 'Эндпоинты для работы с GigaChat',
       },
     ],
   },

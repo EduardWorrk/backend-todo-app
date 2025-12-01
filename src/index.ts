@@ -10,6 +10,7 @@ import goalsRoutes from './routes/goals';
 import commentsRoutes from './routes/comments';
 import notificationsRoutes from './routes/notifications';
 import categoriesRoutes from './routes/categories';
+import aiRoutes from './routes/ai';
 import { errorHandler } from './middleware/error-handler';
 import { swaggerSpec } from './config/swagger';
 import { websocketService } from './services/websocket.service';
@@ -99,6 +100,9 @@ app.use('/notifications', notificationsRoutes);
 
 // Роуты категорий
 app.use('/categories', categoriesRoutes);
+
+// Роуты для интеграций с ИИ
+app.use('/ai', aiRoutes);
 
 // Централизованный обработчик ошибок (должен быть последним)
 app.use(errorHandler);

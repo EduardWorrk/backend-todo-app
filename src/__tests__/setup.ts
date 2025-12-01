@@ -62,3 +62,11 @@ jest.mock('../services/telegram.service', () => ({
   },
 }));
 
+// Мокируем GigaChat сервис
+jest.mock('../services/gigachat.service', () => ({
+  gigaChatService: {
+    isConfigured: jest.fn(),
+    sendMessage: jest.fn(),
+  },
+}));
+

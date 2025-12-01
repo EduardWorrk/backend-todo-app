@@ -12,6 +12,7 @@ Backend API для управления задачами с поддержкой
 - 💬 Комментарии к задачам
 - 🔔 WebSocket уведомления в реальном времени
 - 📊 Swagger API документация
+- 🤖 Прокси-эндпоинт для GigaChat (запросы из фронтенда в сторону LLM)
 
 ## Быстрый старт
 
@@ -92,6 +93,75 @@ TELEGRAM_AUTH_CODE_EXPIRY_MINUTES=2  # Опционально, по умолча
 - Каждый код можно использовать только один раз
 - При первом входе создается новый пользователь с логином `telegram_{telegram_id}` и временным email
 - Авторизация через Telegram дополняет стандартную авторизацию (email/password)
+
+## Интеграция с GigaChat
+
+Бэкенд предоставляет защищённый эндпоинт, который проксирует запросы от фронтенда в GigaChat. Это избавляет фронт от необходимости хранить креденшелы.
+
+### Переменные окружения
+
+Добавьте в `.env` (и при необходимости в `docker-compose.yml`):
+
+```env
+GIGACHAT_CREDENTIALS=base64_client_id_and_secret
+GIGACHAT_SCOPE=GIGACHAT_API_PERS          # опционально, значение по умолчанию
+GIGACHAT_MODEL=GigaChat-2-Max             # опционально
+GIGACHAT_TIMEOUT_MS=60000                 # опционально
+GIGACHAT_REJECT_UNAUTHORIZED=false        # включите true, если у вас есть валидный сертификат
+GIGACHAT_AUTH_URL=https://ngw.devices.sberbank.ru:9443/api/v2/oauth   # опционально
+GIGACHAT_CHAT_URL=https://gigachat.devices.sberbank.ru/api/v1/chat/completions # опционально
+```
+
+> **Важно:** переменная `GIGACHAT_CREDENTIALS` — это Base64 от `client_id:client_secret`, который выдаёт Сбер.
+
+### Запрос из фронтенда
+
+```
+POST /ai/gigachat/chat
+Authorization: Bearer <JWT>
+Content-Type: application/json
+
+{
+  "message": "что ты умеешь?"
+}
+```
+
+В ответ вернётся:
+
+```json
+{
+  "status": "success",
+  "message": "Ответ получен от GigaChat",
+  "data": {
+    "reply": "Я виртуальный помощник GigaChat...",
+    "model": "GigaChat-2-Max",
+    "choices": [
+      {
+        "index": 0,
+        "message": { "role": "assistant", "content": "..." },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 10,
+      "completion_tokens": 80,
+      "total_tokens": 90
+    }
+  }
+}
+```
+
+Можно передать собственную историю диалога:
+
+```json
+{
+  "messages": [
+    { "role": "system", "content": "Ты ассистент для планирования задач" },
+    { "role": "user", "content": "Напомни про дедлайны" }
+  ],
+  "temperature": 0.2
+}
+```
 
 ## Категории задач
 

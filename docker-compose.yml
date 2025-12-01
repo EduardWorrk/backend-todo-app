@@ -19,18 +19,27 @@ services:
   app:
     build: .
     container_name: backend-todo-app
+    env_file: .env
     ports:
-      - "${PORT:-3001}:3000"
+      - "${HOST_PORT:-3002}:3000"
     environment:
       NODE_ENV: production
       PORT: ${PORT:-3000}
+      HOST_PORT: ${HOST_PORT:-3002}
       DB_HOST: db
       DB_PORT: 5432
       DB_USER: ${DB_USER:-postgres}
       DB_PASSWORD: ${DB_PASSWORD:-postgres}
       DB_NAME: ${DB_NAME:-todo_db}
       DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@db:5432/${DB_NAME:-todo_db}
-      SERVER_URL: ${SERVER_URL:-http://194.87.248.160:3001}
+      SERVER_URL: ${SERVER_URL:-http://localhost:3002}
+      GIGACHAT_CREDENTIALS: ${GIGACHAT_CREDENTIALS:-}
+      GIGACHAT_SCOPE: ${GIGACHAT_SCOPE:-GIGACHAT_API_PERS}
+      GIGACHAT_MODEL: ${GIGACHAT_MODEL:-GigaChat-2-Max}
+      GIGACHAT_TIMEOUT_MS: ${GIGACHAT_TIMEOUT_MS:-60000}
+      GIGACHAT_REJECT_UNAUTHORIZED: ${GIGACHAT_REJECT_UNAUTHORIZED:-false}
+      GIGACHAT_AUTH_URL: ${GIGACHAT_AUTH_URL:-https://ngw.devices.sberbank.ru:9443/api/v2/oauth}
+      GIGACHAT_CHAT_URL: ${GIGACHAT_CHAT_URL:-https://gigachat.devices.sberbank.ru/api/v1/chat/completions}
     depends_on:
       db:
         condition: service_healthy
