@@ -60,10 +60,10 @@ export class TelegramService {
   };
 
   /**
-   * Генерирует 6-значный код авторизации
+   * Генерирует 4-значный код авторизации
    */
   private generateCode(): string {
-    return Math.floor(100000 + Math.random() * 900000).toString();
+    return Math.floor(1000 + Math.random() * 9000).toString();
   }
 
   /**
@@ -201,6 +201,57 @@ export class TelegramService {
       throw new Error('Telegram bot token is not configured');
     }
     return this.bot;
+  }
+
+  /**
+   * Получить ссылку на аватар пользователя Telegram (если есть)
+   */
+  async getUserAvatarUrl(telegramId: number): Promise<string | null> {
+    try {
+      const bot = this.getActiveBot();
+      const photos = await bot.getUserProfilePhotos(telegramId, { limit: 1 });
+
+      const firstSet = photos.photos?.[0];
+      if (!firstSet || firstSet.length === 0) {
+        return null;
+      }
+
+      // Берем самое большое фото из первой группы
+      const largestPhoto = firstSet[firstSet.length - 1];
+      const fileLink = await bot.getFileLink(largestPhoto.file_id);
+      return fileLink;
+    } catch (error) {
+      console.warn(
+        `[TelegramService] Failed to fetch avatar for ${telegramId}:`,
+        error
+      );
+      return null;
+    }
+  }
+
+  /**
+   * Получить профиль пользователя Telegram (username, first_name, last_name)
+   */
+  async getUserProfile(telegramId: number): Promise<{
+    username?: string;
+    first_name?: string;
+    last_name?: string;
+  } | null> {
+    try {
+      const bot = this.getActiveBot();
+      const chat = await bot.getChat(telegramId);
+      return {
+        username: (chat as any)?.username,
+        first_name: (chat as any)?.first_name,
+        last_name: (chat as any)?.last_name,
+      };
+    } catch (error) {
+      console.warn(
+        `[TelegramService] Failed to fetch profile for ${telegramId}:`,
+        error
+      );
+      return null;
+    }
   }
 }
 

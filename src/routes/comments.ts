@@ -1,9 +1,9 @@
 import { Router } from 'express';
 import { commentController } from '../controllers/comment.controller';
-import { validate, validateCommentId, createCommentSchema, updateCommentSchema } from '../validators/comment.validator';
-import { validateTaskId } from '../validators/todo.validator';
-import { asyncHandler } from '../middleware/error-handler';
 import authenticateToken from '../middleware/auth';
+import { asyncHandler } from '../middleware/error-handler';
+import { createCommentSchema, updateCommentSchema, validate, validateCommentId } from '../validators/comment.validator';
+import { validateTaskId } from '../validators/todo.validator';
 
 const router = Router();
 
@@ -31,6 +31,7 @@ router.use(authenticateToken);
  *         required: true
  *         schema:
  *           type: integer
+ *           example: 1
  *     responses:
  *       200:
  *         description: Список комментариев успешно получен
@@ -57,6 +58,7 @@ router.get(
  *         required: true
  *         schema:
  *           type: integer
+ *           example: 1
  *     requestBody:
  *       required: true
  *       content:
@@ -79,7 +81,7 @@ router.post(
 /**
  * @swagger
  * /comments/{id}:
- *   put:
+ *   patch:
  *     summary: Обновить комментарий
  *     tags: [Comments]
  *     security:
@@ -99,19 +101,10 @@ router.post(
  *     responses:
  *       200:
  *         description: Комментарий успешно обновлен
- */
-router.put(
-  '/:id',
-  validateCommentId,
-  validate(updateCommentSchema),
-  asyncHandler(async (req, res) => {
-    await commentController.updateComment(req, res);
-  })
-);
-
-/**
- * @swagger
- * /comments/{id}:
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/CommentResponse'
  *   delete:
  *     summary: Удалить комментарий
  *     tags: [Comments]
@@ -126,9 +119,22 @@ router.put(
  *     responses:
  *       200:
  *         description: Комментарий успешно удален
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/DeleteCommentResponse'
  */
+router.patch(
+  '/comments/:id',
+  validateCommentId,
+  validate(updateCommentSchema),
+  asyncHandler(async (req, res) => {
+    await commentController.updateComment(req, res);
+  })
+);
+
 router.delete(
-  '/:id',
+  '/comments/:id',
   validateCommentId,
   asyncHandler(async (req, res) => {
     await commentController.deleteComment(req, res);

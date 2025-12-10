@@ -267,12 +267,12 @@ router.post(
  *                 example: 123456789
  *               code:
  *                 type: string
- *                 description: 6-значный код авторизации
- *                 example: "123456"
+ *                 description: 4-значный код авторизации
+ *                 example: "1234"
  *           examples:
  *             example1:
  *               value:
- *                 code: "123456"
+ *                 code: "1234"
  *     responses:
  *       200:
  *         description: Успешная авторизация через Telegram

@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { SecurityLogger, getClientIp, getUserAgent } from '../utils/security-logger';
 
@@ -15,7 +15,8 @@ declare global {
   }
 }
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+const JWT_SECRET =
+  process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
 // Middleware для проверки JWT токена
 export const authenticateToken = (req: Request, res: Response, next: NextFunction) => {

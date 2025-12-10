@@ -97,6 +97,7 @@ export class AuthService {
         email: true,
         password: true,
         created_at: true,
+        telegram_id: true,
       },
     });
 
@@ -133,7 +134,31 @@ export class AuthService {
     });
 
     // Удаляем пароль из объекта пользователя
-    const { password: _, ...userWithoutPassword } = user;
+    // Получаем аватар Telegram, если связан telegram_id
+    let avatarUrl: string | null = null;
+    const telegramIdNumber =
+      typeof user.telegram_id === 'bigint'
+        ? Number(user.telegram_id)
+        : typeof user.telegram_id === 'number'
+          ? user.telegram_id
+          : null;
+
+    if (telegramIdNumber && telegramService.isBotConfigured()) {
+      try {
+        avatarUrl = await telegramService.getUserAvatarUrl(telegramIdNumber);
+      } catch {
+        avatarUrl = null;
+      }
+    }
+
+    const userResponse: UserDto = {
+      id: user.id,
+      login: user.login,
+      email: user.email,
+      telegram_id: telegramIdNumber,
+      created_at: user.created_at,
+      avatar_url: avatarUrl,
+    };
 
     // Логирование успешного входа
     SecurityLogger.logAuthSuccess(
@@ -143,7 +168,7 @@ export class AuthService {
       metadata?.userAgent
     );
 
-    return { user: userWithoutPassword, token };
+    return { user: userResponse, token };
   }
 
   /**
@@ -185,8 +210,18 @@ export class AuthService {
 
     // Если пользователь не найден, создаем нового
     if (!user) {
-      const login = `telegram_${resolvedTelegramId}`;
-      const email = `telegram_${resolvedTelegramId}@telegram.local`;
+      let profileLogin: string | undefined;
+
+      if (telegramService.isBotConfigured()) {
+        const profile = await telegramService.getUserProfile(resolvedTelegramId);
+        if (profile) {
+          profileLogin = profile.username || profile.first_name || undefined;
+        }
+      }
+
+    
+      const login = profileLogin?.trim() || 'user';
+      const email = ``;
       const tempPassword = await bcrypt.hash(
         `temp_${resolvedTelegramId}_${Date.now()}`,
         AUTH_CONSTANTS.BCRYPT_SALT_ROUNDS
@@ -223,6 +258,16 @@ export class AuthService {
       );
     }
 
+    // Получаем ссылку на аватар, если настроен бот
+    let avatarUrl: string | null = null;
+    if (telegramService.isBotConfigured()) {
+      try {
+        avatarUrl = await telegramService.getUserAvatarUrl(resolvedTelegramId);
+      } catch (error) {
+        avatarUrl = null;
+      }
+    }
+
     if (!user) {
       throw new AuthenticationError(AUTH_CONSTANTS.ERRORS.INTERNAL_ERROR);
     }
@@ -240,6 +285,7 @@ export class AuthService {
       email: user.email,
       telegram_id: Number(resolvedTelegramId),
       created_at: user.created_at,
+      avatar_url: avatarUrl,
     };
 
     SecurityLogger.logAuthSuccess(

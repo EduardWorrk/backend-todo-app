@@ -3,7 +3,6 @@
  */
 
 export const COMMENT_CONSTANTS = {
-  // Сообщения об ошибках
   ERRORS: {
     CONTENT_REQUIRED: 'Содержимое комментария обязательно',
     INVALID_COMMENT_ID: 'Неверный ID комментария',
@@ -13,7 +12,6 @@ export const COMMENT_CONSTANTS = {
     NO_ACCESS_TO_TASK: 'У вас нет доступа к этой задаче',
   },
 
-  // Сообщения об успехе
   SUCCESS: {
     CREATED: 'Комментарий успешно добавлен',
     UPDATED: 'Комментарий успешно обновлен',

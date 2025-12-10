@@ -1,11 +1,11 @@
 import { Request, Response } from 'express';
-import { commentService } from '../services/comment.service';
 import { COMMENT_CONSTANTS } from '../constants/comment.constants';
 import {
-  CommentsResponseDto,
   CommentResponseDto,
+  CommentsResponseDto,
   DeleteCommentResponseDto,
 } from '../dto/comment.dto';
+import { commentService } from '../services/comment.service';
 
 /**
  * Контроллер для обработки HTTP запросов комментариев
@@ -31,6 +31,7 @@ export class CommentController {
   /**
    * Получить комментарии задачи
    */
+  
   async getComments(req: Request, res: Response): Promise<void> {
     const taskId = parseInt(req.params.id);
     const userId = req.user!.id;

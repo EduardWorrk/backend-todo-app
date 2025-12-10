@@ -28,7 +28,7 @@ describe('POST /auth/telegram/request-code', () => {
       
       // Мокируем сервис Telegram
       mockTelegramService.isBotConfigured = jest.fn().mockReturnValue(true);
-      mockTelegramService.generateAuthCode = jest.fn().mockResolvedValue('123456');
+      mockTelegramService.generateAuthCode = jest.fn().mockResolvedValue('1234');
 
       // Выполняем запрос
       const response = await request(app)
@@ -92,7 +92,7 @@ describe('POST /auth/telegram/login', () => {
   describe('Успешные сценарии', () => {
     it('должен авторизовать существующего пользователя через Telegram', async () => {
       const telegramId = 123456789;
-      const code = '123456';
+      const code = '1234';
       const mockUser = {
         id: 1,
         login: 'telegram_123456789',
@@ -128,7 +128,7 @@ describe('POST /auth/telegram/login', () => {
 
     it('должен создать нового пользователя при первом входе через Telegram', async () => {
       const telegramId = 987654321;
-      const code = '654321';
+      const code = '4321';
       const mockNewUser = {
         id: 2,
         login: `telegram_${telegramId}`,
@@ -175,10 +175,10 @@ describe('POST /auth/telegram/login', () => {
       expect(response.body.status).toBe('error');
     });
 
-    it('должен вернуть ошибку, если код не состоит из 6 цифр', async () => {
+    it('должен вернуть ошибку, если код не состоит из 4 цифр', async () => {
       const response = await request(app)
         .post('/auth/telegram/login')
-        .send({ telegram_id: 123456789, code: '12345' })
+        .send({ telegram_id: 123456789, code: '123' })
         .expect(400);
 
       expect(response.body.status).toBe('error');
@@ -187,7 +187,7 @@ describe('POST /auth/telegram/login', () => {
     it('должен вернуть ошибку, если код содержит не только цифры', async () => {
       const response = await request(app)
         .post('/auth/telegram/login')
-        .send({ telegram_id: 123456789, code: '12345a' })
+        .send({ telegram_id: 123456789, code: '12a4' })
         .expect(400);
 
       expect(response.body.status).toBe('error');
@@ -197,7 +197,7 @@ describe('POST /auth/telegram/login', () => {
   describe('Ошибки авторизации', () => {
     it('должен вернуть ошибку при неверном коде', async () => {
       const telegramId = 123456789;
-      const code = '000000';
+      const code = '0000';
 
       // Мокируем сервис Telegram - код неверный
       mockTelegramService.consumeAuthCode = jest.fn().mockResolvedValue(null);

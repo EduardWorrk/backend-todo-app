@@ -32,6 +32,7 @@ export interface SendChatCompletionParams {
   temperature?: number;
   top_p?: number;
   userId?: number;
+  model?: string;
 }
 
 class GigaChatService {
@@ -76,7 +77,7 @@ class GigaChatService {
 
     const token = await this.getAccessToken();
     const payload = JSON.stringify({
-      model: this.model,
+      model: params.model?.trim() || this.model,
       messages: params.messages,
       temperature: params.temperature ?? 0.7,
       top_p: params.top_p ?? 0.9,

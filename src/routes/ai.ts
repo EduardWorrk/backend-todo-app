@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { gigaChatController } from '../controllers/gigachat.controller';
-import { asyncHandler } from '../middleware/error-handler';
 import authenticateToken from '../middleware/auth';
+import { asyncHandler } from '../middleware/error-handler';
 import {
   sendGigaChatMessageSchema,
   validate,
@@ -33,6 +33,7 @@ router.use(authenticateToken);
  *           schema:
  *             $ref: '#/components/schemas/SendGigaChatMessageRequest'
  *           example:
+ *             model: "GigaChat-2-Max"
  *             message: "что ты умеешь?"
  *             temperature: 0.2
  *     responses:
@@ -70,5 +71,7 @@ router.post(
 );
 
 export default router;
+
+
 
 

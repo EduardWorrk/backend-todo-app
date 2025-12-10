@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
-import { todoService } from '../services/todo.service';
 import { TODO_CONSTANTS } from '../constants/todo.constants';
-import { TasksResponseDto, TaskResponseDto, DeleteTaskResponseDto } from '../dto/todo.dto';
+import { DeleteTaskResponseDto, PublicTaskResponseDto, TaskResponseDto, TasksResponseDto } from '../dto/todo.dto';
+import { todoService } from '../services/todo.service';
 
 /**
  * Контроллер для обработки HTTP запросов задач
@@ -117,6 +117,21 @@ export class TodoController {
     const response: TaskResponseDto = {
       status: 'success',
       message: 'Назначение успешно снято',
+      task,
+    };
+
+    res.json(response);
+  }
+
+  /**
+   * Публично получить задачу по ID (без авторизации, только чтение)
+   */
+  async getTaskPublic(req: Request, res: Response): Promise<void> {
+    const taskId = parseInt(req.params.id);
+    const task = await todoService.getTaskPublic(taskId);
+
+    const response: PublicTaskResponseDto = {
+      status: 'success',
       task,
     };
 

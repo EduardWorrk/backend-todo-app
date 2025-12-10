@@ -28,6 +28,7 @@ class GigaChatController {
       messages: history,
       temperature: payload.temperature,
       top_p: payload.top_p,
+      model: payload.model,
       userId: req.user?.id,
     });
 

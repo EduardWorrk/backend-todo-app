@@ -21,7 +21,7 @@ export const telegramLoginSchema = z.object({
     .optional(),
   code: z
     .string({ message: 'Код должен быть строкой' })
-    .length(6, 'Код должен состоять из 6 символов')
+    .length(4, 'Код должен состоять из 4 символов')
     .regex(/^\d+$/, 'Код должен содержать только цифры'),
 });
 

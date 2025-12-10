@@ -25,6 +25,10 @@ export interface SendGigaChatMessageDto {
    */
   temperature?: number;
   top_p?: number;
+  /**
+   * Необязательная модель для запроса (перекрывает значение по умолчанию)
+   */
+  model?: string;
 }
 
 export interface GigaChatUsageDto {

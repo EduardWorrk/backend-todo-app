@@ -28,6 +28,18 @@ export interface TaskDto {
   updated_at: Date;
 }
 
+export interface PublicTaskDto {
+  id: number;
+  name: string;
+  description: string | null;
+  status: string;
+  priority: 'low' | 'medium' | 'high' | null;
+  task_time: string | null;
+  category: CategoryDto | null;
+  created_at: Date;
+  updated_at: Date;
+}
+
 export interface CreateTaskDto {
   name: string;
   description?: string | null;
@@ -60,6 +72,11 @@ export interface TaskResponseDto {
   status: 'success' | 'error';
   message: string;
   task: TaskDto;
+}
+
+export interface PublicTaskResponseDto {
+  status: 'success' | 'error';
+  task: PublicTaskDto;
 }
 
 export interface DeleteTaskResponseDto {

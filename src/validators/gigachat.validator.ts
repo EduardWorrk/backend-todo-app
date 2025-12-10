@@ -37,6 +37,11 @@ export const sendGigaChatMessageSchema = z
       .min(0, 'top_p не может быть меньше 0')
       .max(1, 'top_p не может быть больше 1')
       .optional(),
+    model: z
+      .string({ message: 'model должен быть строкой' })
+      .trim()
+      .min(1, 'model не может быть пустым')
+      .max(100, 'model слишком длинная'),
   })
   .refine(
     (data) => Boolean(data.message) || Boolean(data.messages?.length),

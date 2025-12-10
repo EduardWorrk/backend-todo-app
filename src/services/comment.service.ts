@@ -1,10 +1,10 @@
-import prisma from '../db/prisma';
-import { NotFoundError, ForbiddenError } from '../utils/errors';
 import { COMMENT_CONSTANTS } from '../constants/comment.constants';
-import { CreateCommentInput, UpdateCommentInput } from '../validators/comment.validator';
-import { CommentDto } from '../dto/comment.dto';
-import { notificationService } from './notification.service';
 import { NOTIFICATION_CONSTANTS } from '../constants/notification.constants';
+import prisma from '../db/prisma';
+import { CommentDto } from '../dto/comment.dto';
+import { ForbiddenError, NotFoundError } from '../utils/errors';
+import { CreateCommentInput, UpdateCommentInput } from '../validators/comment.validator';
+import { notificationService } from './notification.service';
 
 /**
  * Селекты для комментариев
@@ -125,26 +125,54 @@ export class CommentService {
     userId: number,
     data: UpdateCommentInput
   ): Promise<CommentDto> {
-    // Проверка существования и прав доступа
-    await this.checkCommentOwnership(commentId, userId);
-
-    const comment = await prisma.comment.update({
+    const existingComment = await prisma.comment.findUnique({
       where: { id: commentId },
-      data: {
-        content: data.content,
-      },
       select: commentSelect,
     });
 
-    return comment;
+    if (!existingComment) {
+      throw new NotFoundError(COMMENT_CONSTANTS.ERRORS.COMMENT_NOT_FOUND);
+    }
+
+    // Проверяем доступ к задаче и что пользователь владеет комментарием
+    await this.checkTaskAccess(existingComment.task_id, userId);
+
+    if (existingComment.user_id !== userId) {
+      throw new ForbiddenError(COMMENT_CONSTANTS.ERRORS.NO_PERMISSION);
+    }
+
+    const updatedComment = await prisma.comment.update({
+      where: { id: commentId },
+      data: { content: data.content },
+      select: commentSelect,
+    });
+
+    return updatedComment;
   }
 
   /**
    * Удалить комментарий
    */
   async deleteComment(commentId: number, userId: number): Promise<void> {
-    // Проверка существования и прав доступа
-    await this.checkCommentOwnership(commentId, userId);
+    const existingComment = await prisma.comment.findUnique({
+      where: { id: commentId },
+      select: {
+        id: true,
+        task_id: true,
+        user_id: true,
+      },
+    });
+
+    if (!existingComment) {
+      throw new NotFoundError(COMMENT_CONSTANTS.ERRORS.COMMENT_NOT_FOUND);
+    }
+
+    // Проверяем доступ к задаче и что пользователь владеет комментарием
+    await this.checkTaskAccess(existingComment.task_id, userId);
+
+    if (existingComment.user_id !== userId) {
+      throw new ForbiddenError(COMMENT_CONSTANTS.ERRORS.NO_PERMISSION);
+    }
 
     await prisma.comment.delete({
       where: { id: commentId },
@@ -188,26 +216,6 @@ export class CommentService {
     }
   }
 
-  /**
-   * Проверка прав доступа к комментарию
-   */
-  private async checkCommentOwnership(commentId: number, userId: number): Promise<void> {
-    const comment = await prisma.comment.findUnique({
-      where: { id: commentId },
-      select: {
-        id: true,
-        user_id: true,
-      },
-    });
-
-    if (!comment) {
-      throw new NotFoundError(COMMENT_CONSTANTS.ERRORS.COMMENT_NOT_FOUND);
-    }
-
-    if (comment.user_id !== userId) {
-      throw new ForbiddenError(COMMENT_CONSTANTS.ERRORS.NO_PERMISSION);
-    }
-  }
 }
 
 // Экспорт singleton экземпляра

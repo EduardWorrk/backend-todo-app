@@ -1,11 +1,11 @@
-import prisma from '../db/prisma';
-import { NotFoundError, ForbiddenError } from '../utils/errors';
-import { TODO_CONSTANTS } from '../constants/todo.constants';
-import { CreateTaskInput, UpdateTaskInput } from '../validators/todo.validator';
-import { TaskDto } from '../dto/todo.dto';
-import { notificationService } from './notification.service';
-import { NOTIFICATION_CONSTANTS } from '../constants/notification.constants';
 import { CATEGORY_CONSTANTS } from '../constants/category.constants';
+import { NOTIFICATION_CONSTANTS } from '../constants/notification.constants';
+import { TODO_CONSTANTS } from '../constants/todo.constants';
+import prisma from '../db/prisma';
+import { PublicTaskDto, TaskDto } from '../dto/todo.dto';
+import { ForbiddenError, NotFoundError } from '../utils/errors';
+import { CreateTaskInput, UpdateTaskInput } from '../validators/todo.validator';
+import { notificationService } from './notification.service';
 
 /**
  * Селекты для задач
@@ -43,6 +43,24 @@ const taskSelect = {
       updated_at: true,
     },
   },
+} as const;
+
+const publicTaskSelect = {
+  id: true,
+  name: true,
+  description: true,
+  status: true,
+  priority: true,
+  task_time: true,
+  category: {
+    select: {
+      id: true,
+      name: true,
+      color: true,
+    },
+  },
+  created_at: true,
+  updated_at: true,
 } as const;
 
 /**
@@ -303,6 +321,22 @@ export class TodoService {
     await this.checkTaskAccess(taskId, userId);
 
     return task as TaskDto;
+  }
+
+  /**
+   * Публичное получение задачи по ID (без авторизации, только чтение)
+   */
+  async getTaskPublic(taskId: number): Promise<PublicTaskDto> {
+    const task = await prisma.task.findUnique({
+      where: { id: taskId },
+      select: publicTaskSelect,
+    });
+
+    if (!task) {
+      throw new NotFoundError(TODO_CONSTANTS.ERRORS.TASK_NOT_FOUND);
+    }
+
+    return task as PublicTaskDto;
   }
 
   /**

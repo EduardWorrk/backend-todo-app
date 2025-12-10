@@ -16,7 +16,7 @@ export const createCommentSchema = z.object({
     .max(5000, 'Содержимое слишком длинное'),
 });
 
-// Схема для обновления комментария
+// Схема для обновления комментария (контент обязателен)
 export const updateCommentSchema = z.object({
   content: z
     .string({ message: 'Содержимое должно быть строкой' })

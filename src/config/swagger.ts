@@ -151,6 +151,12 @@ const socket = io('http://localhost:3000', {
               example: 123456789,
               description: 'Telegram ID пользователя (если авторизован через Telegram)',
             },
+            avatar_url: {
+              type: 'string',
+              nullable: true,
+              example: 'https://api.telegram.org/file/bot<token>/photos/file_0.jpg',
+              description: 'Ссылка на аватар Telegram (если доступен)',
+            },
             created_at: {
               type: 'string',
               format: 'date-time',
@@ -181,9 +187,9 @@ const socket = io('http://localhost:3000', {
             },
             code: {
               type: 'string',
-              pattern: '^\\d{6}$',
-              example: '123456',
-              description: '6-значный код авторизации, полученный в Telegram',
+              pattern: '^\\d{4}$',
+              example: '1234',
+              description: '4-значный код авторизации, полученный в Telegram',
             },
           },
         },
@@ -225,6 +231,11 @@ const socket = io('http://localhost:3000', {
         SendGigaChatMessageRequest: {
           type: 'object',
           properties: {
+            model: {
+              type: 'string',
+              example: 'GigaChat-2-Max',
+              description: 'Модель GigaChat (обязательное поле)',
+            },
             message: {
               type: 'string',
               example: 'что ты умеешь?',
@@ -250,7 +261,7 @@ const socket = io('http://localhost:3000', {
               example: 0.9,
             },
           },
-          required: [],
+          required: ['model'],
         },
         GigaChatChoice: {
           type: 'object',
@@ -397,6 +408,36 @@ const socket = io('http://localhost:3000', {
                 email: { type: 'string' },
               },
             },
+            category: {
+              $ref: '#/components/schemas/Category',
+              nullable: true,
+            },
+            created_at: {
+              type: 'string',
+              format: 'date-time',
+              example: '2025-11-10T12:00:00.000Z',
+            },
+            updated_at: {
+              type: 'string',
+              format: 'date-time',
+              example: '2025-11-10T12:00:00.000Z',
+            },
+          },
+        },
+        PublicTask: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer', example: 1 },
+            name: { type: 'string', example: 'Купить молоко' },
+            description: { type: 'string', nullable: true, example: 'Купить молоко в магазине' },
+            status: { type: 'string', example: 'pending' },
+            priority: {
+              type: 'string',
+              enum: ['low', 'medium', 'high'],
+              nullable: true,
+              example: 'medium',
+            },
+            task_time: { type: 'string', nullable: true, example: '09.30' },
             category: {
               $ref: '#/components/schemas/Category',
               nullable: true,
@@ -678,7 +719,7 @@ const socket = io('http://localhost:3000', {
           type: 'object',
           required: ['content'],
           properties: {
-            content: { type: 'string' },
+            content: { type: 'string', example: 'Обновленный текст комментария' },
           },
         },
         CommentsResponse: {
@@ -694,6 +735,13 @@ const socket = io('http://localhost:3000', {
             status: { type: 'string' },
             message: { type: 'string' },
             comment: { $ref: '#/components/schemas/Comment' },
+          },
+        },
+        DeleteCommentResponse: {
+          type: 'object',
+          properties: {
+            status: { type: 'string' },
+            message: { type: 'string' },
           },
         },
         // Notification Schemas
@@ -762,6 +810,13 @@ const socket = io('http://localhost:3000', {
             task: {
               $ref: '#/components/schemas/Task',
             },
+          },
+        },
+        PublicTaskResponse: {
+          type: 'object',
+          properties: {
+            status: { type: 'string', example: 'success' },
+            task: { $ref: '#/components/schemas/PublicTask' },
           },
         },
         ErrorResponse: {

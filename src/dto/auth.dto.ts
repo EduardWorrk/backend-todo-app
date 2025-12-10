@@ -23,6 +23,7 @@ export interface AuthResponseDto {
     email: string;
     telegram_id?: number | null;
     created_at: Date;
+    avatar_url?: string | null;
   };
   error?: string;
 }
@@ -33,6 +34,7 @@ export interface UserDto {
   email: string;
   telegram_id?: number | null;
   created_at: Date;
+   avatar_url?: string | null;
 }
 
 export interface RequestTelegramCodeDto {

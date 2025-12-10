@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import { todoController } from '../controllers/todo.controller';
-import { validate, validateTaskId, createTaskSchema, updateTaskSchema } from '../validators/todo.validator';
-import { asyncHandler } from '../middleware/error-handler';
 import authenticateToken from '../middleware/auth';
+import { asyncHandler } from '../middleware/error-handler';
+import { createTaskSchema, updateTaskSchema, validate, validateTaskId } from '../validators/todo.validator';
 
 const router = Router();
 
@@ -13,7 +13,44 @@ const router = Router();
  *   description: Эндпоинты для управления задачами (требуется аутентификация)
  */
 
-// Применяем middleware для всех роутов задач
+/**
+ * @swagger
+ * /todos/public/{id}:
+ *   get:
+ *     summary: Публичный просмотр задачи (без авторизации)
+ *     tags: [Todos]
+ *     security: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID задачи
+ *         example: 1
+ *     responses:
+ *       200:
+ *         description: Задача успешно получена
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/PublicTaskResponse'
+ *       404:
+ *         description: Задача не найдена
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+router.get(
+  '/public/:id',
+  validateTaskId,
+  asyncHandler(async (req, res) => {
+    await todoController.getTaskPublic(req, res);
+  })
+);
+
+// Применяем middleware для всех остальных роутов задач
 router.use(authenticateToken);
 
 /**
