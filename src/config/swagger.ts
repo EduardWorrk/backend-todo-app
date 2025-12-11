@@ -65,12 +65,12 @@ const socket = io('http://localhost:3000', {
     },
     servers: [
       {
-        url: process.env.SERVER_URL || `http://localhost:${process.env.HOST_PORT || process.env.PORT || 3000}`,
+        url: process.env.SERVER_URL || `http://localhost:${process.env.HOST_PORT || process.env.PORT || 3002}`,
         description: process.env.SERVER_URL ? 'Production server' : 'Development server',
       },
       // Добавляем localhost для разработки, если указан SERVER_URL
       ...(process.env.SERVER_URL ? [{
-        url: `http://localhost:${process.env.HOST_PORT || process.env.PORT || 3000}`,
+        url: `http://localhost:${process.env.HOST_PORT || process.env.PORT || 3002}`,
         description: 'Development server (localhost)',
       }] : []),
     ],

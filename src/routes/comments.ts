@@ -80,7 +80,7 @@ router.post(
 
 /**
  * @swagger
- * /comments/{id}:
+ * /tasks/comments/{id}:
  *   patch:
  *     summary: Обновить комментарий
  *     tags: [Comments]
@@ -125,7 +125,7 @@ router.post(
  *               $ref: '#/components/schemas/DeleteCommentResponse'
  */
 router.patch(
-  '/comments/:id',
+  '/tasks/comments/:id',
   validateCommentId,
   validate(updateCommentSchema),
   asyncHandler(async (req, res) => {
@@ -134,7 +134,7 @@ router.patch(
 );
 
 router.delete(
-  '/comments/:id',
+  '/tasks/comments/:id',
   validateCommentId,
   asyncHandler(async (req, res) => {
     await commentController.deleteComment(req, res);
