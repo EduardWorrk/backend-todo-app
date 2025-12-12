@@ -18,6 +18,7 @@ export interface TaskDto {
   status: string; // pending, in_progress, completed
   priority: 'low' | 'medium' | 'high' | null;
   task_time: string | null;
+  position: number;
   completed_at: Date | null;
   assigned_to_id: number | null;
   shared_goal_id: number | null;
@@ -35,6 +36,7 @@ export interface PublicTaskDto {
   status: string;
   priority: 'low' | 'medium' | 'high' | null;
   task_time: string | null;
+  position: number;
   category: CategoryDto | null;
   created_at: Date;
   updated_at: Date;
@@ -46,6 +48,7 @@ export interface CreateTaskDto {
   status?: string;
   priority?: 'low' | 'medium' | 'high' | null;
   task_time?: string | null;
+  position?: number;
   created_at?: string | null;
   shared_goal_id?: number | null;
   assigned_to_id?: number | null;
@@ -58,6 +61,7 @@ export interface UpdateTaskDto {
   status?: string;
   priority?: 'low' | 'medium' | 'high' | null;
   task_time?: string | null;
+  position?: number;
   created_at?: string | null;
   assigned_to_id?: number | null;
   category_id?: number | null;

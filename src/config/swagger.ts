@@ -384,6 +384,11 @@ const socket = io('http://localhost:3000', {
               example: '14.30',
               description: 'Время задачи в формате HH.MM',
             },
+            position: {
+              type: 'integer',
+              example: 0,
+              description: 'Позиция задачи для drag-and-drop',
+            },
             completed_at: {
               type: 'string',
               format: 'date-time',
@@ -447,6 +452,7 @@ const socket = io('http://localhost:3000', {
               example: 'medium',
             },
             task_time: { type: 'string', nullable: true, example: '09.30' },
+            position: { type: 'integer', example: 0 },
             category: {
               $ref: '#/components/schemas/Category',
               nullable: true,
@@ -494,6 +500,12 @@ const socket = io('http://localhost:3000', {
               nullable: true,
               pattern: '^([01]\\d|2[0-3])\\.[0-5]\\d$',
               example: '09.15',
+            },
+            position: {
+              type: 'integer',
+              minimum: 0,
+              example: 0,
+              description: 'Позиция задачи (опционально, автоматически назначается если не указано)',
             },
             shared_goal_id: {
               type: 'integer',
@@ -549,6 +561,12 @@ const socket = io('http://localhost:3000', {
               nullable: true,
               pattern: '^([01]\\d|2[0-3])\\.[0-5]\\d$',
               example: '18.45',
+            },
+            position: {
+              type: 'integer',
+              minimum: 0,
+              example: 1,
+              description: 'Новая позиция задачи',
             },
             assigned_to_id: {
               type: 'integer',

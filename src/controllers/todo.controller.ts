@@ -137,6 +137,29 @@ export class TodoController {
 
     res.json(response);
   }
+
+  /**
+   * Обновить позиции задач (drag-and-drop)
+   */
+  async updateTaskPositions(req: Request, res: Response): Promise<void> {
+    const userId = req.user!.id;
+    const { taskIds } = req.body;
+
+    if (!Array.isArray(taskIds) || taskIds.length === 0) {
+      res.status(400).json({
+        status: 'error',
+        message: 'taskIds должен быть непустым массивом чисел',
+      });
+      return;
+    }
+
+    await todoService.updateTaskPositions(userId, taskIds);
+
+    res.json({
+      status: 'success',
+      message: 'Позиции задач обновлены',
+    });
+  }
 }
 
 // Экспорт singleton экземпляра

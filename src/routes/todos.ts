@@ -347,4 +347,48 @@ router.patch(
   })
 );
 
+/**
+ * @swagger
+ * /todos/positions:
+ *   patch:
+ *     summary: Обновить позиции задач (drag-and-drop)
+ *     tags: [Todos]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - taskIds
+ *             properties:
+ *               taskIds:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *                 description: Массив ID задач в новом порядке
+ *                 example: [1, 3, 2, 4]
+ *     responses:
+ *       200:
+ *         description: Позиции задач успешно обновлены
+ *       400:
+ *         description: Ошибка валидации
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       401:
+ *         description: Токен не предоставлен или невалиден
+ *       403:
+ *         description: Нет прав на обновление позиций задач
+ */
+router.patch(
+  '/positions',
+  asyncHandler(async (req, res) => {
+    await todoController.updateTaskPositions(req, res);
+  })
+);
+
 export default router;

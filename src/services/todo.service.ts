@@ -20,6 +20,7 @@ const taskSelect = {
   status: true,
   priority: true,
   task_time: true,
+  position: true,
   completed_at: true,
   assigned_to_id: true,
   shared_goal_id: true,
@@ -52,6 +53,7 @@ const publicTaskSelect = {
   status: true,
   priority: true,
   task_time: true,
+  position: true,
   category: {
     select: {
       id: true,
@@ -117,7 +119,7 @@ export class TodoService {
 
     const tasks = await prisma.task.findMany({
       where,
-      orderBy: { created_at: 'desc' },
+      orderBy: { position: 'asc' },
       select: taskSelect,
     });
 
@@ -135,6 +137,18 @@ export class TodoService {
 
     await this.ensureCategoryExists(data.category_id ?? null);
 
+    // Определяем позицию для новой задачи
+    let position = data.position ?? 0;
+    if (data.position === undefined) {
+      // Находим максимальную позицию среди задач пользователя
+      const maxPosition = await prisma.task.findFirst({
+        where: { user_id: userId },
+        orderBy: { position: 'desc' },
+        select: { position: true },
+      });
+      position = (maxPosition?.position ?? -1) + 1;
+    }
+
     const taskData: any = {
       user_id: userId,
       name: data.name,
@@ -142,6 +156,7 @@ export class TodoService {
       status: data.status || 'pending',
       priority: data.priority ?? null,
       task_time: data.task_time ?? null,
+      position,
       category_id: data.category_id ?? null,
     };
 
@@ -441,6 +456,34 @@ export class TodoService {
     }
 
     throw new ForbiddenError(TODO_CONSTANTS.ERRORS.NO_PERMISSION);
+  }
+
+  /**
+   * Обновить позиции задач (для drag-and-drop)
+   */
+  async updateTaskPositions(userId: number, taskIds: number[]): Promise<void> {
+    // Проверяем, что все задачи принадлежат пользователю
+    const tasks = await prisma.task.findMany({
+      where: {
+        id: { in: taskIds },
+        user_id: userId,
+      },
+      select: { id: true },
+    });
+
+    if (tasks.length !== taskIds.length) {
+      throw new ForbiddenError(TODO_CONSTANTS.ERRORS.NO_PERMISSION);
+    }
+
+    // Обновляем позиции в транзакции
+    await prisma.$transaction(
+      taskIds.map((taskId, index) =>
+        prisma.task.update({
+          where: { id: taskId },
+          data: { position: index },
+        })
+      )
+    );
   }
 
   /**

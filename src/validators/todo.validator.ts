@@ -1,5 +1,5 @@
+import { NextFunction, Request, Response } from 'express';
 import { z } from 'zod';
-import { Request, Response, NextFunction } from 'express';
 import { TODO_CONSTANTS } from '../constants/todo.constants';
 
 /**
@@ -12,33 +12,39 @@ export const createTaskSchema = z.object({
     .string({ message: 'Название должно быть строкой' })
     .min(1, TODO_CONSTANTS.ERRORS.NAME_REQUIRED)
     .max(255, 'Название слишком длинное'),
-  
+
   description: z
     .string({ message: 'Описание должно быть строкой' })
     .max(5000, 'Описание слишком длинное')
     .nullable()
     .optional(),
-  
+
   status: z
     .enum(['pending', 'in_progress', 'completed'], {
       message: 'Статус должен быть одним из: pending, in_progress, completed',
     })
     .optional(),
-  
+
   priority: z
     .enum(['low', 'medium', 'high'], {
       message: 'Приоритет должен быть одним из: low, medium, high',
     })
     .nullable()
     .optional(),
-  
+
   task_time: z
     .union([
       z.string().regex(/^([01]\d|2[0-3])\.[0-5]\d$/, 'task_time должно быть в формате HH.MM (00.00 - 23.59)'),
       z.null()
     ])
     .optional(),
-  
+
+  position: z
+    .number({ message: 'Позиция должна быть числом' })
+    .int('Позиция должна быть целым числом')
+    .min(0, 'Позиция должна быть >= 0')
+    .optional(),
+
   created_at: z
     .string({ message: 'created_at должно быть в формате ISO 8601 (например, 2025-11-10T12:00:00.000Z)' })
     .datetime({ message: 'created_at должно быть валидной датой ISO 8601' })
@@ -100,13 +106,19 @@ export const updateTaskSchema = z.object({
       z.null()
     ])
     .optional(),
-  
+
+  position: z
+    .number({ message: 'Позиция должна быть числом' })
+    .int('Позиция должна быть целым числом')
+    .min(0, 'Позиция должна быть >= 0')
+    .optional(),
+
   created_at: z
     .string({ message: 'created_at должно быть в формате ISO 8601 (например, 2025-11-10T12:00:00.000Z)' })
     .datetime({ message: 'created_at должно быть валидной датой ISO 8601' })
     .nullable()
     .optional(),
-  
+
   assigned_to_id: z
     .number({ message: 'ID исполнителя должен быть числом' })
     .int('ID исполнителя должен быть целым числом')
@@ -127,6 +139,7 @@ export const updateTaskSchema = z.object({
     data.status !== undefined ||
     data.priority !== undefined ||
     data.task_time !== undefined ||
+    data.position !== undefined ||
     data.created_at !== undefined ||
     data.assigned_to_id !== undefined ||
     data.category_id !== undefined,
