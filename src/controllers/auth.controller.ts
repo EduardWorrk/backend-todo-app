@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { authService } from '../services/auth.service';
 import { telegramService } from '../services/telegram.service';
 import { AUTH_CONSTANTS } from '../constants/auth.constants';
-import { AuthResponseDto } from '../dto/auth.dto';
+import {AuthResponseDto, TelegramLoginDto} from '../dto/auth.dto';
 import { getClientIp, getUserAgent } from '../utils/security-logger';
 import { RequestTelegramCodeInput, TelegramLoginInput } from '../validators/telegram.validator';
 
@@ -90,7 +90,7 @@ export class AuthController {
       userAgent: getUserAgent(req),
     };
 
-    const data: TelegramLoginInput = req.body;
+    const data: TelegramLoginDto = req.body;
     const { user, token } = await authService.loginWithTelegram(
       data,
       metadata
