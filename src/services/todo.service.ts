@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { CATEGORY_CONSTANTS } from '../constants/category.constants';
 import { NOTIFICATION_CONSTANTS } from '../constants/notification.constants';
 import { TODO_CONSTANTS } from '../constants/todo.constants';
@@ -119,7 +120,7 @@ export class TodoService {
 
     const tasks = await prisma.task.findMany({
       where,
-      orderBy: { position: 'asc' },
+      orderBy: { position: 'asc' } as any,
       select: taskSelect,
     });
 
@@ -143,13 +144,13 @@ export class TodoService {
       // Находим максимальную позицию среди задач пользователя
       const maxPosition = await prisma.task.findFirst({
         where: { user_id: userId },
-        orderBy: { position: 'desc' },
-        select: { position: true },
-      });
+        orderBy: { position: 'desc' } as any,
+        select: { position: true } as any,
+      }) as { position: number } | null;
       position = (maxPosition?.position ?? -1) + 1;
     }
 
-    const taskData: any = {
+    const taskData: Omit<Prisma.TaskUncheckedCreateInput, 'position'> & { position: number } = {
       user_id: userId,
       name: data.name,
       description: data.description || null,
@@ -480,7 +481,7 @@ export class TodoService {
       taskIds.map((taskId, index) =>
         prisma.task.update({
           where: { id: taskId },
-          data: { position: index },
+          data: { position: index } as any,
         })
       )
     );
