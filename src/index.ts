@@ -144,7 +144,6 @@ const server: HTTPServer = app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
   const spec = swaggerSpec as any; // Type assertion для доступа к paths
   const pathsCount = Object.keys(spec.paths || {}).length;
-  console.log(`[Swagger] Swagger spec loaded: ${pathsCount} paths`);
   if (pathsCount === 0) {
     console.error('[Swagger] WARNING: Swagger spec is empty! Check /api-docs/info for details');
   }
